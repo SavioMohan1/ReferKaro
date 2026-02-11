@@ -55,9 +55,11 @@ export default function JobSeekerDashboard({ profile, user }: JobSeekerDashboard
                                 </div>
                                 <p className="text-blue-100 mt-2 text-sm">1 token = 1 referral application</p>
                             </div>
-                            <Button className="bg-white text-blue-600 hover:bg-blue-50 h-12 px-8">
-                                Buy Tokens
-                            </Button>
+                            <Link href="/buy-tokens">
+                                <Button className="bg-white text-blue-600 hover:bg-blue-50 h-12 px-8">
+                                    Buy Tokens
+                                </Button>
+                            </Link>
                         </div>
                     </div>
 
