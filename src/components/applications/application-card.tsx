@@ -1,0 +1,155 @@
+'use client'
+
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { User, Briefcase, Calendar, ExternalLink, Check, X } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+
+interface ApplicationCardProps {
+    application: any
+}
+
+export default function ApplicationCard({ application }: ApplicationCardProps) {
+    const [loading, setLoading] = useState(false)
+    const [status, setStatus] = useState(application.status)
+    const router = useRouter()
+
+    const handleStatusUpdate = async (newStatus: 'accepted' | 'rejected') => {
+        setLoading(true)
+
+        const supabase = createClient()
+        const { error } = await supabase
+            .from('applications')
+            .update({
+                status: newStatus,
+                reviewed_at: new Date().toISOString()
+            })
+            .eq('id', application.id)
+
+        if (error) {
+            console.error('Error updating application:', error)
+            alert('Failed to update application')
+            setLoading(false)
+            return
+        }
+
+        setStatus(newStatus)
+        setLoading(false)
+        router.refresh()
+    }
+
+    const statusColors = {
+        pending: 'bg-orange-100 text-orange-700',
+        accepted: 'bg-green-100 text-green-700',
+        rejected: 'bg-red-100 text-red-700',
+    }
+
+    return (
+        <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="bg-blue-100 rounded-full p-2">
+                            <User className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold">{application.profiles?.full_name || 'Anonymous'}</h3>
+                            <p className="text-sm text-gray-500">{application.profiles?.email}</p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 text-sm text-gray-600 mt-3">
+                        <div className="flex items-center gap-1">
+                            <Briefcase className="h-4 w-4" />
+                            <span>{application.jobs?.role_title}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            <span>Applied {new Date(application.applied_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[status as keyof typeof statusColors]}`}>
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                </span>
+            </div>
+
+            <div className="mt-4 p-4 bg-slate-50 rounded-lg">
+                <h4 className="font-semibold mb-2">Cover Letter</h4>
+                <p className="text-sm text-gray-700 whitespace-pre-line line-clamp-3">
+                    {application.cover_letter}
+                </p>
+
+                <div className="flex gap-3 mt-3 flex-wrap">
+                    {application.resume_url && (
+                        <button
+                            onClick={async () => {
+                                const supabase = createClient()
+                                const { data, error } = await supabase.storage
+                                    .from('resumes')
+                                    .createSignedUrl(application.resume_url, 60)
+                                if (data) window.open(data.signedUrl, '_blank')
+                                if (error) alert('Error opening resume')
+                            }}
+                            className="text-sm text-blue-600 hover:underline flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-md"
+                        >
+                            <ExternalLink className="h-3 w-3" /> View Resume
+                        </button>
+                    )}
+                    {application.linkedin_url && (
+                        <a
+                            href={application.linkedin_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                        >
+                            LinkedIn <ExternalLink className="h-3 w-3" />
+                        </a>
+                    )}
+                    {application.portfolio_url && (
+                        <a
+                            href={application.portfolio_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                        >
+                            Portfolio <ExternalLink className="h-3 w-3" />
+                        </a>
+                    )}
+                </div>
+            </div>
+
+            {status === 'pending' && (
+                <div className="flex gap-3 mt-6">
+                    <Button
+                        onClick={() => handleStatusUpdate('accepted')}
+                        disabled={loading}
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                    >
+                        <Check className="h-4 w-4 mr-2" />
+                        Accept
+                    </Button>
+                    <Button
+                        onClick={() => handleStatusUpdate('rejected')}
+                        disabled={loading}
+                        variant="outline"
+                        className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                    >
+                        <X className="h-4 w-4 mr-2" />
+                        Reject
+                    </Button>
+                </div>
+            )}
+
+            {status === 'accepted' && (
+                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800">
+                        <strong>Next Step:</strong> Use the proxy email system to forward this candidate's profile to your company's HR.
+                    </p>
+                </div>
+            )}
+        </div>
+    )
+}
