@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Navbar from '@/components/layout/navbar'
 import { Button } from '@/components/ui/button'
 import { ShieldCheck, IndianRupee, ArrowRight, UserPlus, Clock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -41,23 +42,7 @@ export default function EmployeeDashboard({ profile, user }: EmployeeDashboardPr
     return (
         <div className="min-h-screen bg-slate-50">
             {/* Header */}
-            <header className="bg-white border-b">
-                <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-2 font-bold text-xl text-blue-600">
-                        <ShieldCheck className="h-6 w-6" />
-                        <span>ReferKaro</span>
-                    </Link>
-                    <div className="flex items-center gap-4">
-                        <div className="text-right">
-                            <p className="text-sm text-gray-500">Welcome back,</p>
-                            <p className="font-semibold">{profile.full_name || user.email}</p>
-                        </div>
-                        <Button variant="outline" onClick={handleLogout} size="sm">
-                            Logout
-                        </Button>
-                    </div>
-                </div>
-            </header>
+            <Navbar profile={profile} user={user} />
 
             {/* Main Content */}
             <main className="container mx-auto px-4 py-8">

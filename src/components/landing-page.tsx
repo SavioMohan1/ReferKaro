@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Footer from "@/components/layout/footer"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, CheckCircle, ShieldCheck, Mail, IndianRupee, Layers } from "lucide-react"
 
@@ -150,23 +151,65 @@ export default function LandingPage() {
                         </div>
                     </div>
                 </section>
+
+
+                {/* About / Company Info Section (Inspired by Hostinger Template) */}
+                <section className="w-full py-16 bg-white border-t">
+                    <div className="container px-4 md:px-6">
+                        <div className="grid md:grid-cols-2 gap-12 items-center">
+                            <div className="space-y-6">
+                                <div className="inline-block rounded-lg bg-blue-100 px-3 py-1 text-sm text-blue-700 font-medium">
+                                    Our Story
+                                </div>
+                                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl text-slate-900">
+                                    Bridging the Gap Between Talent and Opportunity
+                                </h2>
+                                <p className="text-lg text-slate-600 leading-relaxed">
+                                    ReferKaro was born from a simple frustration: seeing talented people get rejected by automated systems (ATS) without a human ever seeing their resume.
+                                </p>
+                                <p className="text-lg text-slate-600 leading-relaxed">
+                                    We created a platform where "Who you know" isn't a barrier. By incentivizing employees to review and refer, we ensure that every application gets the attention it deserves.
+                                </p>
+                                <div className="grid grid-cols-2 gap-6 pt-4">
+                                    <div>
+                                        <p className="text-3xl font-bold text-blue-600">500+</p>
+                                        <p className="text-sm text-slate-500">Active Referrers</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-3xl font-bold text-blue-600">₹10L+</p>
+                                        <p className="text-sm text-slate-500">Referral Bonuses Earned</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-3xl font-bold text-blue-600">98%</p>
+                                        <p className="text-sm text-slate-500">Response Rate</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-3xl font-bold text-blue-600">24h</p>
+                                        <p className="text-sm text-slate-500">Avg. Turnaround</p>
+                                    </div>
+                                </div>
+                                <Link href="/about">
+                                    <Button variant="outline" className="mt-4">
+                                        Read More About Us <ArrowRight className="ml-2 h-4 w-4" />
+                                    </Button>
+                                </Link>
+                            </div>
+                            <div className="relative h-[500px] rounded-2xl overflow-hidden shadow-xl bg-slate-100 p-8 flex items-center justify-center">
+                                {/* Placeholder for an image */}
+                                <div className="text-center space-y-4">
+                                    <ShieldCheck className="h-24 w-24 text-blue-200 mx-auto" />
+                                    <h3 className="text-2xl font-bold text-slate-400">Our Mission</h3>
+                                    <p className="text-slate-400">To democratize access to career opportunities.</p>
+                                </div>
+                                {/* In a real app, use: <Image src="/path/to/image.jpg" fill className="object-cover" /> */}
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </main>
 
-            <footer className="w-full py-6 bg-slate-900 text-white">
-                <div className="container flex flex-col items-center justify-between gap-4 md:flex-row px-4 md:px-6">
-                    <p className="text-center text-sm leading-loose text-gray-400 md:text-left">
-                        © 2026 ReferKaro. Built for the Indian Tech Community.
-                    </p>
-                    <div className="flex gap-4">
-                        <Link className="text-sm font-medium hover:underline underline-offset-4" href="#">
-                            Terms
-                        </Link>
-                        <Link className="text-sm font-medium hover:underline underline-offset-4" href="#">
-                            Privacy
-                        </Link>
-                    </div>
-                </div>
-            </footer>
-        </div>
+            <Footer />
+        </div >
     )
 }
+
