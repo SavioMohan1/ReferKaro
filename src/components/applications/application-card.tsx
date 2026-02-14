@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { User, Briefcase, Calendar, ExternalLink, Check, X } from 'lucide-react'
+import { User, Briefcase, Calendar, ExternalLink, Check, X, Copy, Mail, AlertTriangle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -13,30 +13,67 @@ interface ApplicationCardProps {
 export default function ApplicationCard({ application }: ApplicationCardProps) {
     const [loading, setLoading] = useState(false)
     const [status, setStatus] = useState(application.status)
+    // Initialize with existing proxy email if available (it comes as an array from Supabase)
+    const initialProxy = application.proxy_emails?.[0]?.proxy_address || null
+    const [proxyEmail, setProxyEmail] = useState<string | null>(initialProxy)
+    const [analyzing, setAnalyzing] = useState(false)
+    const [aiResult, setAiResult] = useState<any>(null)
     const router = useRouter()
+
+    const handleAnalyze = async () => {
+        setAnalyzing(true)
+        try {
+            const response = await fetch('/api/ai/analyze-resume', {
+                method: 'POST',
+                body: JSON.stringify({ applicationId: application.id })
+            })
+            const data = await response.json()
+            if (data.error) throw new Error(data.error)
+            setAiResult(data.analysis)
+        } catch (error: any) {
+            alert(error.message || 'Analysis failed')
+        } finally {
+            setAnalyzing(false)
+        }
+    }
 
     const handleStatusUpdate = async (newStatus: 'accepted' | 'rejected') => {
         setLoading(true)
 
-        const supabase = createClient()
-        const { error } = await supabase
-            .from('applications')
-            .update({
-                status: newStatus,
-                reviewed_at: new Date().toISOString()
+        try {
+            const response = await fetch('/api/applications/review', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    applicationId: application.id,
+                    status: newStatus,
+                }),
             })
-            .eq('id', application.id)
 
-        if (error) {
-            console.error('Error updating application:', error)
-            alert('Failed to update application')
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to update application')
+            }
+
+            setStatus(newStatus)
+            if (data.proxyEmail) {
+                setProxyEmail(data.proxyEmail)
+            }
+            router.refresh()
+        } catch (error: any) {
+            console.error('Error updating status:', error)
+            alert(error.message || 'Failed to update application status')
+        } finally {
             setLoading(false)
-            return
         }
+    }
 
-        setStatus(newStatus)
-        setLoading(false)
-        router.refresh()
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text)
+        alert('Copied to clipboard!')
     }
 
     const statusColors = {
@@ -82,21 +119,34 @@ export default function ApplicationCard({ application }: ApplicationCardProps) {
                     {application.cover_letter}
                 </p>
 
-                <div className="flex gap-3 mt-3 flex-wrap">
+                <div className="flex gap-3 mt-3 flex-wrap items-center">
                     {application.resume_url && (
-                        <button
-                            onClick={async () => {
-                                const supabase = createClient()
-                                const { data, error } = await supabase.storage
-                                    .from('resumes')
-                                    .createSignedUrl(application.resume_url, 60)
-                                if (data) window.open(data.signedUrl, '_blank')
-                                if (error) alert('Error opening resume')
-                            }}
-                            className="text-sm text-blue-600 hover:underline flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-md"
-                        >
-                            <ExternalLink className="h-3 w-3" /> View Resume
-                        </button>
+                        <>
+                            <button
+                                onClick={async () => {
+                                    const supabase = createClient()
+                                    const { data, error } = await supabase.storage
+                                        .from('resumes')
+                                        .createSignedUrl(application.resume_url, 60)
+                                    if (data) window.open(data.signedUrl, '_blank')
+                                    if (error) alert('Error opening resume')
+                                }}
+                                className="text-sm text-blue-600 hover:underline flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-md"
+                            >
+                                <ExternalLink className="h-3 w-3" /> View Resume
+                            </button>
+
+                            {/* AI Analysis Button */}
+                            <Button
+                                onClick={handleAnalyze}
+                                disabled={analyzing}
+                                size="sm"
+                                variant="outline"
+                                className="bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"
+                            >
+                                {analyzing ? 'Analyzing...' : '⚡ Analyze Match'}
+                            </Button>
+                        </>
                     )}
                     {application.linkedin_url && (
                         <a
@@ -121,6 +171,40 @@ export default function ApplicationCard({ application }: ApplicationCardProps) {
                 </div>
             </div>
 
+            {/* AI Results Display */}
+            {aiResult && (
+                <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-white border border-purple-100 rounded-lg animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-bold text-purple-900 flex items-center gap-2">
+                            <span>⚡ AI Match Score</span>
+                        </h4>
+                        <span className={`text-xl font-bold px-3 py-1 rounded-lg ${aiResult.score >= 80 ? 'bg-green-100 text-green-700' :
+                            aiResult.score >= 50 ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-red-100 text-red-700'
+                            }`}>
+                            {aiResult.score}/100
+                        </span>
+                    </div>
+
+                    <p className="text-sm text-purple-800 mb-3 italic">"{aiResult.summary}"</p>
+
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p className="font-semibold text-green-700 mb-1">Pros</p>
+                            <ul className="list-disc list-inside space-y-1 text-slate-600">
+                                {aiResult.pros.map((p: string, i: number) => <li key={i}>{p}</li>)}
+                            </ul>
+                        </div>
+                        <div>
+                            <p className="font-semibold text-red-700 mb-1">Cons</p>
+                            <ul className="list-disc list-inside space-y-1 text-slate-600">
+                                {aiResult.cons.map((c: string, i: number) => <li key={i}>{c}</li>)}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {status === 'pending' && (
                 <div className="flex gap-3 mt-6">
                     <Button
@@ -129,7 +213,7 @@ export default function ApplicationCard({ application }: ApplicationCardProps) {
                         className="flex-1 bg-green-600 hover:bg-green-700"
                     >
                         <Check className="h-4 w-4 mr-2" />
-                        Accept
+                        Accept & Refer
                     </Button>
                     <Button
                         onClick={() => handleStatusUpdate('rejected')}
@@ -143,11 +227,43 @@ export default function ApplicationCard({ application }: ApplicationCardProps) {
                 </div>
             )}
 
+            {/* Proxy Email Display */}
             {status === 'accepted' && (
                 <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-sm text-green-800">
-                        <strong>Next Step:</strong> Use the proxy email system to forward this candidate's profile to your company's HR.
-                    </p>
+                    <h4 className="flex items-center text-green-800 font-bold mb-2">
+                        <Check className="h-5 w-5 mr-2" />
+                        Candidate Accepted!
+                    </h4>
+
+                    {proxyEmail ? (
+                        <div className="mt-3">
+                            <p className="text-sm text-green-800 mb-2">
+                                Use this <strong>Secure Proxy Email</strong> to refer the candidate in your company portal:
+                            </p>
+                            <div className="flex items-center gap-2 bg-white border border-green-300 p-2 rounded-md">
+                                <Mail className="h-4 w-4 text-gray-500" />
+                                <code className="flex-1 font-mono text-sm text-gray-800">{proxyEmail}</code>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 px-2 hover:bg-green-100"
+                                    onClick={() => copyToClipboard(proxyEmail)}
+                                >
+                                    <Copy className="h-4 w-4 text-green-700" />
+                                </Button>
+                            </div>
+                            <div className="flex items-start gap-2 mt-3 text-xs text-amber-700 bg-amber-50 p-2 rounded">
+                                <AlertTriangle className="h-4 w-4 shrink-0" />
+                                <p>
+                                    <strong>Important:</strong> Do NOT use their personal email. Updates sent to this proxy email will be automatically tracked by ReferKaro.
+                                </p>
+                            </div>
+                        </div>
+                    ) : (
+                        <p className="text-sm text-green-800">
+                            Refresh the page to see the unique referral email for this candidate.
+                        </p>
+                    )}
                 </div>
             )}
         </div>

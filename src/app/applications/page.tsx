@@ -40,6 +40,9 @@ export default async function ApplicationsPage() {
         id,
         full_name,
         email
+      ),
+      proxy_emails (
+        proxy_address
       )
     `)
         .eq('employee_id', user.id)
