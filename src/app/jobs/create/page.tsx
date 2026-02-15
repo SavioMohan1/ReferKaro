@@ -9,7 +9,7 @@ import Link from 'next/link'
 
 export default function CreateJobPage() {
     const router = useRouter()
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(true) // Start loading initially
     const [formData, setFormData] = useState({
         company: '',
         role_title: '',
@@ -20,6 +20,39 @@ export default function CreateJobPage() {
         description: '',
         requirements: '',
         job_url: '',
+    })
+
+    // Check verification status on load
+    useState(() => {
+        const checkVerification = async () => {
+            const supabase = createClient()
+            const { data: { user } } = await supabase.auth.getUser()
+
+            if (!user) {
+                router.push('/login')
+                return
+            }
+
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('is_verified, company')
+                .eq('id', user.id)
+                .single()
+
+            if (!profile?.is_verified) {
+                router.push('/verify')
+                return
+            }
+
+            // Auto-fill company if available
+            if (profile.company) {
+                setFormData(prev => ({ ...prev, company: profile.company }))
+            }
+
+            setLoading(false)
+        }
+
+        checkVerification()
     })
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -56,6 +89,10 @@ export default function CreateJobPage() {
         }
 
         router.push('/dashboard')
+    }
+
+    if (loading) {
+        return <div className="min-h-screen flex items-center justify-center">Loading...</div>
     }
 
     return (

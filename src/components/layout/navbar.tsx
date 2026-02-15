@@ -80,7 +80,7 @@ export default function Navbar({ profile, user }: NavbarProps) {
 
                     {/* Desktop Nav */}
                     <nav className="hidden md:flex items-center gap-6 ml-6">
-                        {navItems.slice(1).map((item) => (
+                        {navItems.map((item) => (
                             <Link
                                 key={item.href}
                                 href={item.href}
@@ -89,6 +89,15 @@ export default function Navbar({ profile, user }: NavbarProps) {
                                 {item.name}
                             </Link>
                         ))}
+                        {/* Admin Link */}
+                        {user?.email === 'saviomohan2002@gmail.com' && (
+                            <Link
+                                href="/admin"
+                                className="text-sm font-bold text-purple-600 hover:text-purple-800 transition-colors border border-purple-200 px-3 py-1 rounded-full bg-purple-50"
+                            >
+                                Admin Panel
+                            </Link>
+                        )}
                     </nav>
                 </div>
 

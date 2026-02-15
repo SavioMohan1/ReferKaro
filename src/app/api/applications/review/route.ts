@@ -103,6 +103,44 @@ export async function POST(request: Request) {
             }
         }
 
+        // --- NEW: Send Email to Candidate ---
+        try {
+            const candidateEmail = application.profiles.email
+            if (candidateEmail) {
+                const { sendEmail } = await import('@/lib/resend')
+
+                const subject = status === 'accepted'
+                    ? '🎉 Congratulations! Your Application was Accepted'
+                    : 'Application Update'
+
+                let htmlContent = `<h1>Application Update</h1><p>Your application status has been updated to: <strong>${status.toUpperCase()}</strong>.</p>`
+
+                if (status === 'accepted') {
+                    htmlContent = `
+                        <h1>🎉 Great News!</h1>
+                        <p>Your application has been <strong>ACCEPTED</strong> and referred!</p>
+                        <p>Keep an eye on your inbox for the official referral link from the company.</p>
+                        <p>Good luck!</p>
+                    `
+                } else if (status === 'rejected') {
+                    htmlContent = `
+                        <h1>Application Update</h1>
+                        <p>Thank you for your interest. Unfortunately, your application was not selected at this time.</p>
+                        <p>Don't lose hope! Apply to other roles on ReferKaro.</p>
+                    `
+                }
+
+                await sendEmail({
+                    to: candidateEmail,
+                    subject: subject,
+                    html: htmlContent
+                })
+            }
+        } catch (emailError) {
+            console.error('Email sending failed (non-blocking):', emailError)
+        }
+        // ------------------------------------
+
         return NextResponse.json({
             success: true,
             status,

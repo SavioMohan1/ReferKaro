@@ -90,6 +90,34 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Failed to create application' }, { status: 500 })
         }
 
+        // --- NEW: Send Email Notification to Employee ---
+        try {
+            // 1. Fetch Employee details
+            const { data: employee } = await supabase
+                .from('profiles')
+                .select('email, full_name')
+                .eq('id', employee_id)
+                .single()
+
+            if (employee && employee.email) {
+                const { sendEmail } = await import('@/lib/resend')
+                await sendEmail({
+                    to: employee.email,
+                    subject: `New Application for Job #${job_id}`,
+                    html: `
+                        <h1>New Application Received! 🚀</h1>
+                        <p>Hi ${employee.full_name || 'there'},</p>
+                        <p>You have received a new application for your referral opening.</p>
+                        <p><strong>Applicant:</strong> ${user.email}</p>
+                        <a href="${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/dashboard">View Application</a>
+                    `
+                })
+            }
+        } catch (emailError) {
+            console.error('Email sending failed (non-blocking):', emailError)
+        }
+        // ------------------------------------------------
+
         return NextResponse.json({
             success: true,
             application,

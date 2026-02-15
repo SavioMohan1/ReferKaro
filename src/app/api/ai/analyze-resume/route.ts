@@ -14,12 +14,12 @@ export async function POST(request: Request) {
 
         const supabase = await createClient()
 
-        // 1. Fetch Application Details (Resume URL + Job Description)
+        // 1. Fetch Application Details (Resume URL + Job Description + Requirements)
         const { data: application, error: appError } = await supabase
             .from('applications')
             .select(`
                 *,
-                job:jobs(description, role_title)
+                job:jobs(description, requirements, role_title)
             `)
             .eq('id', applicationId)
             .single()
@@ -43,7 +43,6 @@ export async function POST(request: Request) {
         const buffer = Buffer.from(arrayBuffer)
 
         // Handle Import Interop (CommonJS vs ESM)
-        // Handle Import Interop (CommonJS vs ESM)
         // @ts-ignore
         const { PDFParse } = require('pdf-parse')
 
@@ -62,18 +61,24 @@ export async function POST(request: Request) {
         // Free memory
         await parser.destroy()
 
-        // 4. Analyze with Gemini 1.5 Flash
+        // 4. Analyze with Gemini 2.5 Flash
         const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY!)
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
 
         const prompt = `
         You are an expert HR Recruiter. 
         Job Role: ${application.job.role_title}
-        Job Description: "${application.job.description}"
         
-        Candidate Resume: "${resumeText.substring(0, 10000)}" 
+        Job Description: 
+        "${application.job.description}"
+
+        Job Requirements:
+        "${application.job.requirements}"
         
-        Analyze the match. Return ONLY a JSON object with this structure:
+        Candidate Resume: 
+        "${resumeText.substring(0, 10000)}" 
+        
+        Analyze the match based on BOTH the Description and Requirements. Return ONLY a JSON object with this structure:
         {
             "score": number (0-100),
             "pros": ["point 1", "point 2", "point 3"],
