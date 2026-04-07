@@ -52,27 +52,96 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Failed to update transaction' }, { status: 500 })
         }
 
-        // Add tokens to profile
-        // Note: Ideally use a stored procedure/RPC for true atomicity, but client-side atomic increment pattern works too for MVP
-        // OR better: Fetch current balance first
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('token_balance')
-            .eq('id', transaction.user_id)
-            .single()
+        if (transaction.type === 'token') {
+            // Add tokens to profile
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('token_balance')
+                .eq('id', transaction.user_id)
+                .single()
 
-        const currentBalance = profile?.token_balance || 0
+            const currentBalance = profile?.token_balance || 0
 
-        const { error: balanceError } = await supabase
-            .from('profiles')
-            .update({ token_balance: currentBalance + transaction.tokens_added })
-            .eq('id', transaction.user_id)
+            const { error: balanceError } = await supabase
+                .from('profiles')
+                .update({ token_balance: currentBalance + transaction.tokens_added })
+                .eq('id', transaction.user_id)
 
-        if (balanceError) {
-            console.error('Error updating balance:', balanceError)
-            // Critical: Payment success but balance update failed. 
-            // In producton, log this specifically for manual reconciliation.
-            return NextResponse.json({ error: 'Payment verified but balance update failed' }, { status: 500 })
+            if (balanceError) {
+                console.error('Error updating balance:', balanceError)
+                return NextResponse.json({ error: 'Payment verified but balance update failed' }, { status: 500 })
+            }
+        } else if (transaction.type === 'success_fee' && transaction.application_id) {
+            // 1. Update application status to 'accepted'
+            const { error: appUpdateError } = await supabase
+                .from('applications')
+                .update({ status: 'accepted' })
+                .eq('id', transaction.application_id)
+
+            if (appUpdateError) {
+                console.error('Error updating application status:', appUpdateError)
+                return NextResponse.json({ error: 'Payment verified but application status update failed' }, { status: 500 })
+            }
+
+            // 2. Generate Proxy Email
+            const { data: application } = await supabase
+                .from('applications')
+                .select('*, profiles:job_seeker_id(email)')
+                .eq('id', transaction.application_id)
+                .single()
+
+            if (application && application.profiles) {
+                const randomString = crypto.randomBytes(4).toString('hex')
+                const domain = 'referkaro.com'
+                const proxyAddress = `ref-${randomString}@${domain}`
+
+                const { error: proxyError } = await supabase
+                    .from('proxy_emails')
+                    .insert({
+                        application_id: transaction.application_id,
+                        proxy_address: proxyAddress,
+                        real_email: application.profiles.email,
+                        is_active: true
+                    })
+
+                if (!proxyError) {
+                    try {
+                        const { sendEmail } = await import('@/lib/resend')
+                        await sendEmail({
+                            to: application.profiles.email,
+                            subject: '🎉 Referral Unlocked & Tokens Added!',
+                            html: `
+                                <h1>Success Phase!</h1>
+                                <p>Your payment was successful and your referral proxy email has been generated: <strong>${proxyAddress}</strong>.</p>
+                                <p>The employee will now be able to use this email to make the referral.</p>
+                                <p>As a bonus, we have credited <strong>2 Tokens</strong> to your account for future use!</p>
+                            `
+                        })
+                    } catch (emailErr) {
+                        console.error('Email sending failed:', emailErr)
+                    }
+
+                    // --- NEW: Add 2 Bonus Tokens to Job Seeker ---
+                    try {
+                        const { data: jsProfile } = await supabase
+                            .from('profiles')
+                            .select('token_balance')
+                            .eq('id', transaction.user_id)
+                            .single()
+
+                        const currentBalance = jsProfile?.token_balance || 0
+                        await supabase
+                            .from('profiles')
+                            .update({ token_balance: currentBalance + 2 })
+                            .eq('id', transaction.user_id)
+                    } catch (tokenErr) {
+                        console.error('Failed to add bonus tokens:', tokenErr)
+                    }
+                    // ---------------------------------------------
+                } else {
+                    console.error('Error creating proxy email:', proxyError)
+                }
+            }
         }
 
         return NextResponse.json({ success: true })

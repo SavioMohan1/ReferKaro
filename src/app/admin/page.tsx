@@ -13,6 +13,9 @@ const ADMIN_EMAIL = "saviomohan2002@gmail.com" // Hardcoded for Hackathon
 export default function AdminPage() {
     const [profiles, setProfiles] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+    const [userToDelete, setUserToDelete] = useState<string | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
     const router = useRouter()
     const supabase = createClient()
 
@@ -63,14 +66,76 @@ export default function AdminPage() {
         }
     }
 
-    if (loading) return <div className="p-8">Loading Admin Panel...</div>
+    const openDeleteModal = (userId: string) => {
+        setUserToDelete(userId)
+        setDeleteModalOpen(true)
+    }
+
+    const closeDeleteModal = () => {
+        setDeleteModalOpen(false)
+        setUserToDelete(null)
+    }
+
+    const confirmDeleteUser = async () => {
+        if (!userToDelete) return
+        setIsDeleting(true)
+
+        try {
+            const response = await fetch(`/api/admin/delete-user?userId=${userToDelete}`, {
+                method: 'DELETE',
+            })
+            const data = await response.json()
+
+            if (data.success) {
+                checkAdminAndFetch() // Refresh list
+                closeDeleteModal()
+            } else {
+                alert(`Failed to delete user: ${data.error}`)
+            }
+        } catch (error) {
+            console.error("Error deleting user:", error)
+            alert("An error occurred while deleting the user.")
+        } finally {
+            setIsDeleting(false)
+        }
+    }
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut()
+        router.push('/')
+    }
+
+    if (loading) {
+        return (
+            <div className="container mx-auto py-8 space-y-6">
+                <div className="flex justify-between items-center mb-6">
+                    <div className="h-10 w-48 animate-shimmer rounded-md bg-slate-200"></div>
+                    <div className="h-10 w-24 animate-shimmer rounded-md bg-slate-200"></div>
+                </div>
+                <div className="h-12 w-full animate-shimmer rounded-md bg-slate-200"></div>
+                <div className="bg-white rounded-xl shadow-md p-6">
+                    <div className="h-8 w-1/4 animate-shimmer rounded-md bg-slate-200 mb-6"></div>
+                    <div className="space-y-4">
+                        <div className="h-16 w-full animate-shimmer rounded-md bg-slate-200"></div>
+                        <div className="h-16 w-full animate-shimmer rounded-md bg-slate-200"></div>
+                        <div className="h-16 w-full animate-shimmer rounded-md bg-slate-200"></div>
+                    </div>
+                </div>
+            </div>
+        )
+    }
 
     const pending = profiles.filter(p => p.verification_status === 'pending')
     const allUsers = profiles
 
     return (
         <div className="container mx-auto py-8">
-            <h1 className="text-3xl font-bold mb-6">Admin Dashboard 🛡️</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold">Admin Dashboard 🛡️</h1>
+                <Button variant="outline" onClick={handleLogout}>
+                    Logout
+                </Button>
+            </div>
 
             <Tabs defaultValue="pending">
                 <TabsList className="mb-4">
@@ -153,13 +218,16 @@ export default function AdminPage() {
                                         </td>
                                         <td className="p-3">
                                             {!user.is_banned && (
-                                                <Button size="sm" variant="ghost" className="text-red-600" onClick={() => handleAction(user.id, 'ban')}>
+                                                <Button size="sm" variant="ghost" className="text-red-600 mr-2" onClick={() => handleAction(user.id, 'ban')}>
                                                     Ban User
                                                 </Button>
                                             )}
                                             {user.is_banned && (
-                                                <span className="text-xs text-red-500">Reason: {user.ban_reason}</span>
+                                                <div className="text-xs text-red-500 mb-2">Reason: {user.ban_reason}</div>
                                             )}
+                                            <Button size="sm" variant="destructive" onClick={() => openDeleteModal(user.id)}>
+                                                Delete
+                                            </Button>
                                         </td>
                                     </tr>
                                 ))}
@@ -168,6 +236,25 @@ export default function AdminPage() {
                     </div>
                 </TabsContent>
             </Tabs>
+
+            {deleteModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">Delete User?</h3>
+                        <p className="text-gray-500 mb-6">
+                            Are you absolutely sure you want to delete this user? This action cannot be undone and will permanently remove their account and all associated data.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <Button variant="outline" onClick={closeDeleteModal} disabled={isDeleting}>
+                                Cancel
+                            </Button>
+                            <Button variant="destructive" onClick={confirmDeleteUser} disabled={isDeleting}>
+                                {isDeleting ? "Deleting..." : "Yes, Delete User"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

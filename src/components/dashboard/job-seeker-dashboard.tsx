@@ -23,8 +23,6 @@ export default function JobSeekerDashboard({ profile, user }: JobSeekerDashboard
 
     return (
         <div className="min-h-screen bg-slate-50">
-            {/* Header */}
-            <Navbar profile={profile} user={user} />
 
             {/* Main Content */}
             <main className="container mx-auto px-4 py-8">

@@ -58,7 +58,7 @@ export default function ApplicationCard({ application }: ApplicationCardProps) {
                 throw new Error(data.error || 'Failed to update application')
             }
 
-            setStatus(newStatus)
+            setStatus(data.status)
             if (data.proxyEmail) {
                 setProxyEmail(data.proxyEmail)
             }
@@ -78,6 +78,7 @@ export default function ApplicationCard({ application }: ApplicationCardProps) {
 
     const statusColors = {
         pending: 'bg-orange-100 text-orange-700',
+        payment_pending: 'bg-blue-100 text-blue-700',
         accepted: 'bg-green-100 text-green-700',
         rejected: 'bg-red-100 text-red-700',
     }
@@ -213,7 +214,7 @@ export default function ApplicationCard({ application }: ApplicationCardProps) {
                         className="flex-1 bg-green-600 hover:bg-green-700"
                     >
                         <Check className="h-4 w-4 mr-2" />
-                        Accept & Refer
+                        Accept & Request ₹900
                     </Button>
                     <Button
                         onClick={() => handleStatusUpdate('rejected')}
@@ -224,6 +225,18 @@ export default function ApplicationCard({ application }: ApplicationCardProps) {
                         <X className="h-4 w-4 mr-2" />
                         Reject
                     </Button>
+                </div>
+            )}
+
+            {status === 'payment_pending' && (
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3">
+                    <div className="bg-blue-100 p-2 rounded-full shrink-0">
+                        <AlertTriangle className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-blue-800 mb-1">Awaiting Candidate Payment</h4>
+                        <p className="text-sm text-blue-700">You have accepted this candidate. We are waiting for them to pay the ₹900 success fee to unlock the proxy email.</p>
+                    </div>
                 </div>
             )}
 

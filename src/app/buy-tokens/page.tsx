@@ -189,10 +189,9 @@ export default function BuyTokensPage() {
                                 variant={plan.popular ? 'default' : 'outline'}
                             >
                                 {loading === plan.id ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    <span className="flex items-center justify-center w-full h-full animate-shimmer bg-slate-200/50 text-slate-700 rounded-md">
                                         Processing...
-                                    </>
+                                    </span>
                                 ) : (
                                     'Buy Now'
                                 )}

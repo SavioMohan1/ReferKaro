@@ -17,11 +17,19 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json()
-        const { planId, amount, tokens } = body
+        const { planId, amount, tokens, type = 'token', applicationId = null } = body
+
+        let finalAmount = amount
+        let finalTokens = tokens
+
+        if (type === 'success_fee') {
+            finalAmount = 900 // Hardcode ₹900 required payment
+            finalTokens = 0
+        }
 
         // Create Razorpay Order
         const order = await razorpay.orders.create({
-            amount: amount * 100, // Amount in paise
+            amount: finalAmount * 100, // Amount in paise
             currency: 'INR',
             receipt: `receipt_${Date.now()}`,
         })
@@ -31,10 +39,12 @@ export async function POST(request: Request) {
             .from('transactions')
             .insert({
                 user_id: user.id,
-                amount: amount,
-                tokens_added: tokens,
+                amount: finalAmount,
+                tokens_added: finalTokens,
                 status: 'pending',
                 razorpay_order_id: order.id,
+                type: type,
+                application_id: applicationId
             })
 
         if (dbError) {

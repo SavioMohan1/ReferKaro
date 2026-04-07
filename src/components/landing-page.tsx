@@ -45,12 +45,12 @@ export default function LandingPage() {
                                     Get Referred, <span className="text-blue-600">Not Ignored.</span>
                                 </h1>
                                 <p className="mx-auto max-w-[700px] text-gray-500 md:text-xl dark:text-gray-400">
-                                    Stop applying into the black hole. Connect with verified employees who review your profile and submit a real referral.
+                                    Stop applying into the black hole. Pay verified computing professionals to review your profile. If you're a fit, they submit a real referral.
                                 </p>
                             </div>
                             <div className="space-x-4">
                                 <Button className="h-12 px-8 text-lg">
-                                    Find a Referrer <ArrowRight className="ml-2 h-4 w-4" />
+                                    Request a Review <ArrowRight className="ml-2 h-4 w-4" />
                                 </Button>
                                 <Button variant="outline" className="h-12 px-8 text-lg">
                                     Applying as Employee?
@@ -97,7 +97,7 @@ export default function LandingPage() {
                                     <h3 className="text-xl font-bold">2. Apply & Review</h3>
                                 </div>
                                 <p className="text-gray-500 pl-14">
-                                    Use 1 token to apply. The employee reviews your profile. If they decline, you pay nothing else.
+                                    Use 1 token to request a profile review. The employee reviews your profile. If they decline the referral, you pay nothing else.
                                 </p>
                             </div>
                             <div className="grid gap-1">

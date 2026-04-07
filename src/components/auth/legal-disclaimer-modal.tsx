@@ -97,7 +97,7 @@ export default function LegalDisclaimerModal() {
                             You agree that:
                         </p>
                         <ul className="list-disc pl-5 space-y-2 bg-yellow-50 p-4 rounded-lg border border-yellow-100">
-                            <li>You are responsible for adhering to your current employer's internal referral policies.</li>
+                            <li><strong>Crucial:</strong> Users are solely responsible for ensuring that their use of ReferKaro complies with their employer's Code of Conduct and employment contracts.</li>
                             <li>ReferKaro is <strong>not liable</strong> for any disciplinary action, policy violation, or conflict of interest arising from your use of this platform.</li>
                             <li>You verify that you have the authority to refer candidates for the roles you post.</li>
                         </ul>
@@ -116,8 +116,8 @@ export default function LegalDisclaimerModal() {
                             As a Job Seeker, you understand that:
                         </p>
                         <ul className="list-disc pl-5 space-y-2">
-                            <li>A referral does not guarantee a job interview or offer.</li>
-                            <li>Token purchases are non-refundable once used for an application.</li>
+                            <li><strong>No Guarantee:</strong> A token payment guarantees that your profile will be <em>reviewed</em> by the employee. It does NOT guarantee an interview, a job offer, or that the referral will be submitted if you are not a fit.</li>
+                            <li>Token purchases are non-refundable once used for an application, except when an application is explicitly declined by the employee.</li>
                             <li>You are responsible for the accuracy of the information provided in your profile and resume.</li>
                         </ul>
                     </div>

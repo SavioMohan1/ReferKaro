@@ -101,7 +101,7 @@ export default function ApplicationModal({
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b">
                     <div>
-                        <h2 className="text-2xl font-bold">Apply for Referral</h2>
+                        <h2 className="text-2xl font-bold">Request Profile Review & Referral</h2>
                         <p className="text-gray-600 mt-1">{jobTitle}</p>
                     </div>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -188,7 +188,7 @@ export default function ApplicationModal({
 
                     <div className="flex gap-4 pt-4">
                         <Button type="submit" disabled={loading} className="flex-1">
-                            {loading ? 'Submitting...' : 'Submit Application (1 Token)'}
+                            {loading ? 'Submitting...' : 'Request Review & Referral (1 Token)'}
                         </Button>
                         <Button type="button" variant="outline" onClick={onClose}>
                             Cancel

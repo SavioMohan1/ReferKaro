@@ -4,7 +4,7 @@ import { useState, useEffect, use } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { MapPin, Briefcase, IndianRupee, TrendingUp, ArrowLeft, Calendar } from 'lucide-react'
+import { MapPin, Briefcase, IndianRupee, TrendingUp, ArrowLeft, Calendar, Check } from 'lucide-react'
 import Link from 'next/link'
 import ApplicationModal from '@/components/jobs/application-modal'
 
@@ -26,7 +26,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     const { id } = use(params)
     const [job, setJob] = useState<any>(null)
     const [userProfile, setUserProfile] = useState<any>(null)
-    const [hasApplied, setHasApplied] = useState(false)
+    const [application, setApplication] = useState<any>(null)
     const [showModal, setShowModal] = useState(false)
     const [loading, setLoading] = useState(true)
 
@@ -68,29 +68,43 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
             setUserProfile(profile)
 
             // Check if already applied
-            const { data: application } = await supabase
+            const { data: appData } = await supabase
                 .from('applications')
-                .select('id')
+                .select('id, status')
                 .eq('job_id', id)
                 .eq('job_seeker_id', user.id)
                 .single()
 
-            setHasApplied(!!application)
+            setApplication(appData)
         }
 
         setLoading(false)
     }
 
     const handleApplySuccess = () => {
-        setHasApplied(true)
-        fetchData() // Refresh data to update token balance
+        fetchData() // Refresh data to fetch the new application and update token balance
     }
 
     if (loading || !job) {
-        return <div>Loading...</div>
+        return (
+            <div className="min-h-screen bg-slate-50 py-8">
+                <div className="container max-w-4xl mx-auto px-4">
+                    <div className="bg-white rounded-xl shadow-md overflow-hidden p-8 space-y-6">
+                        <div className="h-12 w-2/3 animate-shimmer rounded-md bg-slate-200"></div>
+                        <div className="h-6 w-1/3 animate-shimmer rounded-md bg-slate-200"></div>
+                        <div className="flex gap-4 mt-6">
+                            <div className="h-8 w-24 animate-shimmer rounded-full bg-slate-200"></div>
+                            <div className="h-8 w-24 animate-shimmer rounded-full bg-slate-200"></div>
+                            <div className="h-8 w-24 animate-shimmer rounded-full bg-slate-200"></div>
+                        </div>
+                        <div className="h-64 w-full animate-shimmer rounded-md bg-slate-200 mt-8"></div>
+                    </div>
+                </div>
+            </div>
+        )
     }
 
-    const canApply = userProfile && userProfile.role === 'job_seeker' && userProfile.token_balance > 0 && !hasApplied
+    const canApply = userProfile && userProfile.role === 'job_seeker' && userProfile.token_balance > 0 && !application
 
     return (
         <div className="min-h-screen bg-slate-50 py-8">
@@ -166,27 +180,40 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                         {/* Referrer Info */}
                         <div className="bg-slate-50 rounded-lg p-6">
                             <h3 className="font-semibold mb-2">Referred by</h3>
-                            <p className="text-gray-700">{job.profiles?.full_name || 'Anonymous Employee'}</p>
+                            <p className="text-gray-700 font-medium flex items-center gap-2">
+                                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">✓ Verified</span>
+                                Employee
+                            </p>
                             {job.profiles?.company && (
-                                <p className="text-sm text-gray-500">Works at {job.profiles.company}</p>
+                                <p className="text-sm text-gray-500 mt-1">Works at {job.profiles.company}</p>
                             )}
                         </div>
 
                         {/* Apply Button */}
                         <div className="pt-4">
-                            {hasApplied ? (
-                                <Button disabled className="w-full h-12 text-lg bg-green-600">
-                                    ✓ Application Submitted
-                                </Button>
+                            {application ? (
+                                application.status === 'payment_pending' ? (
+                                    <Link href="/my-applications" className="w-full">
+                                        <Button className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700 shadow-md flex items-center justify-center gap-2">
+                                            Awaiting Success Fee Payment &mdash; Go to Dashboard
+                                        </Button>
+                                    </Link>
+                                ) : (
+                                    <Link href="/my-applications" className="w-full">
+                                        <Button className="w-full h-12 text-lg bg-emerald-600 hover:bg-emerald-700 shadow-md flex items-center justify-center gap-2">
+                                            <Check className="h-5 w-5" /> Application Submitted &mdash; Track Status
+                                        </Button>
+                                    </Link>
+                                )
                             ) : !userProfile ? (
                                 <Link href="/login">
                                     <Button className="w-full h-12 text-lg">
-                                        Login to Apply
+                                        Login to Request Review
                                     </Button>
                                 </Link>
                             ) : userProfile.role !== 'job_seeker' ? (
                                 <Button disabled className="w-full h-12 text-lg">
-                                    Only Job Seekers Can Apply
+                                    Only Job Seekers Can Request Reviews
                                 </Button>
                             ) : userProfile.token_balance < 1 ? (
                                 <Button className="w-full h-12 text-lg bg-orange-600 hover:bg-orange-700">
@@ -197,7 +224,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                                     onClick={() => setShowModal(true)}
                                     className="w-full h-12 text-lg"
                                 >
-                                    Apply with 1 Token
+                                    Request Review & Referral (1 Token)
                                 </Button>
                             )}
                         </div>

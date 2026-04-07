@@ -23,14 +23,14 @@ export default function EmployeeDashboard({ profile, user }: EmployeeDashboardPr
     }, [])
 
     const fetchPendingCount = async () => {
-        const { data, error } = await supabase
+        const { count, error } = await supabase
             .from('applications')
             .select('id', { count: 'exact', head: true })
             .eq('employee_id', user.id)
             .eq('status', 'pending')
 
-        if (!error && data !== null) {
-            setPendingCount(data as unknown as number)
+        if (!error && count !== null) {
+            setPendingCount(count)
         }
     }
 
@@ -41,8 +41,6 @@ export default function EmployeeDashboard({ profile, user }: EmployeeDashboardPr
 
     return (
         <div className="min-h-screen bg-slate-50">
-            {/* Header */}
-            <Navbar profile={profile} user={user} />
 
             {/* Main Content */}
             <main className="container mx-auto px-4 py-8">

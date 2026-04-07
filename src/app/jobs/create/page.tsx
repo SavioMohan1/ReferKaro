@@ -92,7 +92,17 @@ export default function CreateJobPage() {
     }
 
     if (loading) {
-        return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+        return (
+            <div className="min-h-screen bg-slate-50 py-12 px-4 flex justify-center">
+                <div className="max-w-2xl w-full bg-white rounded-xl shadow-md p-8 space-y-6">
+                    <div className="h-8 w-1/3 animate-shimmer rounded-md bg-slate-200"></div>
+                    <div className="h-12 w-full animate-shimmer rounded-md bg-slate-200 mt-8"></div>
+                    <div className="h-12 w-full animate-shimmer rounded-md bg-slate-200"></div>
+                    <div className="h-32 w-full animate-shimmer rounded-md bg-slate-200"></div>
+                    <div className="h-12 w-full animate-shimmer rounded-md bg-slate-200 mt-6"></div>
+                </div>
+            </div>
+        )
     }
 
     return (

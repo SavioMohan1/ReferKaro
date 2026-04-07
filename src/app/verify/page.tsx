@@ -101,7 +101,22 @@ export default function VerifyPage() {
         }
     }
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+                <div className="w-full max-w-lg bg-white rounded-xl shadow-sm border p-6 space-y-6">
+                    <div className="h-8 w-1/2 animate-shimmer rounded-md bg-slate-200"></div>
+                    <div className="h-4 w-3/4 animate-shimmer rounded-md bg-slate-200"></div>
+                    <div className="space-y-4 pt-4">
+                        <div className="h-10 w-full animate-shimmer rounded-md bg-slate-200"></div>
+                        <div className="h-10 w-full animate-shimmer rounded-md bg-slate-200"></div>
+                        <div className="h-32 w-full animate-shimmer rounded-md bg-slate-200 mt-6"></div>
+                        <div className="h-10 w-full animate-shimmer rounded-md bg-slate-200 mt-4"></div>
+                    </div>
+                </div>
+            </div>
+        )
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
@@ -220,7 +235,7 @@ export default function VerifyPage() {
                                 type="submit"
                                 disabled={!file || verifying || (result?.status === 'verified')}
                                 className={`w-full transition-all duration-300 ${result?.status === 'verified' ? 'bg-green-600 hover:bg-green-700' :
-                                        'bg-purple-600 hover:bg-purple-700'
+                                    'bg-purple-600 hover:bg-purple-700'
                                     }`}
                             >
                                 {verifying ? (

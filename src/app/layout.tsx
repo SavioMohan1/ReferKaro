@@ -4,19 +4,36 @@ import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
 
+import { createClient } from '@/lib/supabase/server'
+import GlobalNavbar from '@/components/layout/global-navbar'
+
 export const metadata: Metadata = {
     title: 'ReferKaro',
     description: 'Validating Referrals, One Click at a Time.',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    let profile = null
+    if (user) {
+        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        profile = data
+    }
+
     return (
         <html lang="en">
-            <body className={inter.className}>{children}</body>
+            <body className={`${inter.className} min-h-screen flex flex-col`}>
+                <GlobalNavbar user={user} profile={profile} />
+                <main className="flex-1 flex flex-col">
+                    {children}
+                </main>
+            </body>
         </html>
     )
 }

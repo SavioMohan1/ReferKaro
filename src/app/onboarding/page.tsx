@@ -112,7 +112,7 @@ export default function OnboardingPage() {
                     disabled={!selectedRole || loading}
                     className="w-full h-12 text-lg"
                 >
-                    {loading ? 'Setting up your account...' : 'Continue'}
+                    {loading ? 'Processing...' : 'Continue'}
                 </Button>
             </div>
         </div>

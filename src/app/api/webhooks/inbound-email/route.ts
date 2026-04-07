@@ -63,10 +63,37 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Failed to update stats' }, { status: 500 })
         }
 
-        // 5. Forward the email to the Real Candidate (Simulated)
-        // In prod: await resend.emails.send({ to: proxyEntry.real_email, ... })
+        // 5. Forward the email to the Real Candidate
         console.log(`🚀 FORWARDING EMAIL TO REAL CANDIDATE: ${proxyEntry.real_email}`)
         console.log(`Subject: ${subject}`)
+
+        try {
+            const { sendEmail } = await import('@/lib/resend')
+
+            const forwardHtml = `
+                <div style="font-family: sans-serif; max-w: 600px; margin: 0 auto;">
+                    <div style="background-color: #f3f4f6; padding: 12px; margin-bottom: 20px; border-radius: 6px;">
+                        <p style="margin: 0; color: #4b5563; font-size: 14px;">
+                            <strong>ReferKaro Secured Forward</strong><br/>
+                            Original Sender: ${from}
+                        </p>
+                    </div>
+                    <div>
+                        ${text ? text.replace(/\n/g, '<br/>') : '<em>You have received a referral from your connected employee! Please check any attached links or instructions.</em>'}
+                    </div>
+                </div>
+            `
+
+            await sendEmail({
+                to: proxyEntry.real_email,
+                subject: `[ReferKaro Forward] ${subject || 'New Message'}`,
+                html: forwardHtml
+            })
+
+            console.log("✅ Email successfully forwarded via Resend.")
+        } catch (emailError) {
+            console.error("❌ Failed to forward email via Resend:", emailError)
+        }
 
         return NextResponse.json({
             success: true,

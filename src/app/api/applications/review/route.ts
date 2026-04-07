@@ -60,11 +60,12 @@ export async function POST(request: Request) {
             )
         }
 
-        // 2. Start a transaction (or just sequential operations)
-        // Update Status
+        // 2. Map 'accepted' to 'payment_pending'
+        const dbStatus = status === 'accepted' ? 'payment_pending' : status
+
         const { error: updateError } = await supabase
             .from('applications')
-            .update({ status })
+            .update({ status: dbStatus })
             .eq('id', applicationId)
 
         if (updateError) {
@@ -73,35 +74,7 @@ export async function POST(request: Request) {
 
         let proxyEmail = null
 
-        // 3. If ACCEPTED, generate Proxy Email
-        if (status === 'accepted') {
-            // Generate a random 8-char string
-            const randomString = crypto.randomBytes(4).toString('hex')
-            // Format: ref-{random}@{domain}
-            // Since we don't have a real domain, we'll use a placeholder or localhost for now.
-            // But to simulate the "Trust Layer", let's use a realistic looking one.
-            const domain = 'referkaro.com'
-            const proxyAddress = `ref-${randomString}@${domain}`
 
-            const { error: proxyError } = await supabase
-                .from('proxy_emails')
-                .insert({
-                    application_id: applicationId,
-                    proxy_address: proxyAddress,
-                    real_email: application.profiles.email,
-                    is_active: true
-                })
-
-            if (proxyError) {
-                console.error('Error creating proxy email:', proxyError)
-                return NextResponse.json(
-                    { error: 'Failed to create proxy email: ' + proxyError.message },
-                    { status: 500 }
-                )
-            } else {
-                proxyEmail = proxyAddress
-            }
-        }
 
         // --- NEW: Send Email to Candidate ---
         try {
@@ -118,9 +91,8 @@ export async function POST(request: Request) {
                 if (status === 'accepted') {
                     htmlContent = `
                         <h1>🎉 Great News!</h1>
-                        <p>Your application has been <strong>ACCEPTED</strong> and referred!</p>
-                        <p>Keep an eye on your inbox for the official referral link from the company.</p>
-                        <p>Good luck!</p>
+                        <p>Your application has been <strong>ACCEPTED</strong> by the referrer!</p>
+                        <p>Log in to your ReferKaro dashboard to pay the ₹900 Success Fee and unlock your referral email securely.</p>
                     `
                 } else if (status === 'rejected') {
                     htmlContent = `
@@ -143,8 +115,8 @@ export async function POST(request: Request) {
 
         return NextResponse.json({
             success: true,
-            status,
-            proxyEmail // value or null
+            status: dbStatus,
+            proxyEmail // will be null now, generated post-payment
         })
 
     } catch (error: any) {
