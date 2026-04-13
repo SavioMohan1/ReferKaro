@@ -9,6 +9,7 @@ export default async function JobsPage() {
         .from('jobs')
         .select('*')
         .eq('is_active', true)
+        .eq('approval_status', 'approved')
         .order('created_at', { ascending: false })
 
     if (error) console.error('Error fetching jobs:', error)

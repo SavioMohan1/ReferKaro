@@ -38,7 +38,7 @@ export async function POST(request: Request) {
             .from('applications')
             .select(`
                 *,
-                job:jobs(id, employee_id, referral_type),
+                job:jobs(id, employee_id, referral_type, job_url),
                 profiles:job_seeker_id(email, token_balance)
             `)
             .eq('id', applicationId)
@@ -102,9 +102,8 @@ export async function POST(request: Request) {
                     return NextResponse.json({ error: 'Failed to accept application' }, { status: 500 })
                 }
 
-                // Generate Proxy Email for the Winner
-                const randomString = crypto.randomBytes(4).toString('hex')
-                const proxyAddress = `ref-${randomString}@referkaro.com`
+                // Use universal proxy email from env (saviomohan2002@gmail.com)
+                const proxyAddress = process.env.PROXY_EMAIL || 'saviomohan2002@gmail.com'
                 await supabaseAdmin.from('proxy_emails').insert({
                     application_id: applicationId,
                     proxy_address: proxyAddress,
@@ -113,7 +112,18 @@ export async function POST(request: Request) {
                 })
                 proxyEmail = proxyAddress
 
-                // 4. Send acceptance email to winner
+                // Create Dashboard Inbox notification for the winner
+                const jobUrl = application.job?.job_url || null
+                await supabaseAdmin.from('notifications').insert({
+                    user_id: application.job_seeker_id,
+                    application_id: applicationId,
+                    type: 'pooling_accepted',
+                    title: '🏆 You were selected from the referral pool!',
+                    body: `Congratulations! You have been chosen. The referrer will submit your application using the contact email: ${proxyAddress}. Use the link below to apply directly to the company posting.`,
+                    job_link: jobUrl,
+                })
+
+                // Send email to winner (non-blocking)
                 sendCandidateEmail(application.profiles.email, 'pooling_accepted', proxyAddress)
 
                 return NextResponse.json({ success: true, status: 'accepted', proxyEmail })
@@ -144,9 +154,8 @@ export async function POST(request: Request) {
                         status: 'success'
                     })
 
-                    // Generate Proxy Email
-                    const randomString = crypto.randomBytes(4).toString('hex')
-                    const proxyAddress = `ref-${randomString}@referkaro.com`
+                    // Generate Proxy Email using universal env address
+                    const proxyAddress = process.env.PROXY_EMAIL || 'saviomohan2002@gmail.com'
                     await supabaseAdmin.from('proxy_emails').insert({
                         application_id: applicationId,
                         proxy_address: proxyAddress,
@@ -161,24 +170,41 @@ export async function POST(request: Request) {
                         .update({ status: 'accepted' })
                         .eq('id', applicationId)
 
+                    // Create inbox notification for seeker
+                    await supabaseAdmin.from('notifications').insert({
+                        user_id: application.job_seeker_id,
+                        application_id: applicationId,
+                        type: 'accepted',
+                        title: '✅ Your referral has been confirmed!',
+                        body: `The referrer will contact the company on your behalf using: ${proxyAddress}. Use the link below to apply to the job posting directly.`,
+                        job_link: application.job?.job_url || null,
+                    })
+
                     // Notify candidate
                     sendCandidateEmail(application.profiles.email, 'accepted', proxyAddress)
 
                     return NextResponse.json({ success: true, status: 'accepted', proxyEmail })
 
                 } else {
-                    // Seeker lacks tokens — move to 'selected' state, prompt payment
+                    // Seeker lacks tokens — move to 'selected', prompt payment
                     const { error: updateSelectedError } = await supabaseAdmin
                         .from('applications')
-                        .update({
-                            status: 'selected',
-                            selected_at: new Date().toISOString()
-                        })
+                        .update({ status: 'selected', selected_at: new Date().toISOString() })
                         .eq('id', applicationId)
 
                     if (updateSelectedError) {
                         return NextResponse.json({ error: 'Failed to update application' }, { status: 500 })
                     }
+
+                    // Create inbox notification for seeker
+                    await supabaseAdmin.from('notifications').insert({
+                        user_id: application.job_seeker_id,
+                        application_id: applicationId,
+                        type: 'selected',
+                        title: '⚡ Action Required — You have been selected!',
+                        body: 'The referrer has chosen you! You need 9 tokens to confirm. Please top up within 24 hours or the offer will expire.',
+                        job_link: application.job?.job_url || null,
+                    })
 
                     // Email seeker to buy tokens
                     sendCandidateEmail(application.profiles.email, 'selected', null)
@@ -201,8 +227,16 @@ export async function POST(request: Request) {
                 return NextResponse.json({ error: 'Failed to update application status' }, { status: 500 })
             }
 
-            sendCandidateEmail(application.profiles.email, 'rejected', null)
+            // Create inbox notification for seeker
+            await supabaseAdmin.from('notifications').insert({
+                user_id: application.job_seeker_id,
+                application_id: applicationId,
+                type: 'rejected',
+                title: 'Application Not Selected',
+                body: 'Thank you for your interest. Unfortunately your application was not chosen this time. Keep applying — there are more opportunities on ReferKaro!',
+            })
 
+            sendCandidateEmail(application.profiles.email, 'rejected', null)
             return NextResponse.json({ success: true, status: 'rejected', proxyEmail: null })
         }
 

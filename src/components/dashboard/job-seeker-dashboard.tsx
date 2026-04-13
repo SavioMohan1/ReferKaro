@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Coins, ArrowRight, FileText, Briefcase, Plus, Clock } from 'lucide-react'
+import InboxPanel from '@/components/dashboard/inbox-panel'
 
 interface JobSeekerDashboardProps {
     profile: any
@@ -138,6 +139,10 @@ export default function JobSeekerDashboard({ profile, user, recentActivity }: Jo
                             })}
                         </div>
                     )}
+                </div>
+                {/* Inbox */}
+                <div className="dk-card dk-card-inner" style={{ marginTop: 28 }}>
+                    <InboxPanel />
                 </div>
             </div>
         </div>

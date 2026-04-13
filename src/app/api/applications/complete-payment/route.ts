@@ -77,9 +77,9 @@ export async function POST(request: Request) {
             // Non-fatal — continue
         }
 
-        // 6. Generate Proxy Email
+        // 6. Generate Proxy Email using universal env address
         const randomString = crypto.randomBytes(4).toString('hex')
-        const proxyAddress = `ref-${randomString}@referkaro.com`
+        const proxyAddress = process.env.PROXY_EMAIL || 'saviomohan2002@gmail.com'
 
         const { error: proxyError } = await supabaseAdmin.from('proxy_emails').insert({
             application_id: applicationId,
@@ -103,6 +103,16 @@ export async function POST(request: Request) {
             console.error('Application status update error:', finalError)
             return NextResponse.json({ error: 'Failed to finalize application' }, { status: 500 })
         }
+
+        // 8. Create Dashboard Inbox notification for seeker
+        await supabaseAdmin.from('notifications').insert({
+            user_id: user.id,
+            application_id: applicationId,
+            type: 'accepted',
+            title: '🎉 Referral Confirmed — Payment Complete!',
+            body: `Your 9 tokens have been processed. The referrer will contact the company using: ${proxyAddress}. Use the link below to apply to the job posting directly.`,
+            job_link: null, // job_url not fetched here — seeker already knows from prior notification
+        })
 
         // 8. Send congratulations email (non-blocking)
         try {
