@@ -156,12 +156,15 @@ export async function POST(request: Request) {
 
                     // Generate Proxy Email using universal env address
                     const proxyAddress = process.env.PROXY_EMAIL || 'saviomohan2002@gmail.com'
-                    await supabaseAdmin.from('proxy_emails').insert({
+                    const { error: proxyErr } = await supabaseAdmin.from('proxy_emails').insert({
                         application_id: applicationId,
                         proxy_address: proxyAddress,
                         real_email: application.profiles.email,
                         is_active: true
                     })
+                    if (proxyErr) {
+                        console.error('proxy_emails insert error:', JSON.stringify(proxyErr))
+                    }
                     proxyEmail = proxyAddress
 
                     // Update application to accepted
