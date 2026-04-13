@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { MessageSquarePlus, Send, Loader2, CheckCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 
 export default function FeedbackPage() {
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -12,78 +11,92 @@ export default function FeedbackPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!feedback.trim()) return
-
         setIsSubmitting(true)
-
-        // Simulate sending to a dummy email address (e.g. feedback@referkaro.com)
         await new Promise(resolve => setTimeout(resolve, 1500))
-
         setIsSubmitting(false)
         setIsSuccess(true)
         setFeedback('')
-
-        // Reset success state after a few seconds
-        setTimeout(() => setIsSuccess(false), 4000)
+        setTimeout(() => setIsSuccess(false), 5000)
     }
 
     return (
-        <div className="container mx-auto py-16 px-4 max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="text-center mb-10 space-y-4">
-                <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <MessageSquarePlus className="h-8 w-8 text-blue-600" />
-                </div>
-                <h1 className="text-3xl font-bold text-slate-900">We Value Your Feedback</h1>
-                <p className="text-slate-600">
-                    Help us improve ReferKaro. Let us know what features you'd like to see next, or if you've encountered any issues!
-                    Your feedback is sent directly to <span className="font-semibold text-blue-600">feedback@referkaro.com</span>.
-                </p>
-            </div>
+        <div className="page-wrapper" style={{ paddingTop:80, position:'relative', overflow:'hidden' }}>
+            <div className="glow-orb glow-violet" style={{ width:380, height:380, top:-60, right:-60, opacity:0.4 }} />
 
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
-                {isSuccess ? (
-                    <div className="flex flex-col items-center justify-center py-10 space-y-4 animate-in zoom-in-95 duration-300">
-                        <CheckCircle className="h-16 w-16 text-green-500" />
-                        <h3 className="text-2xl font-bold text-slate-900">Thank You!</h3>
-                        <p className="text-slate-600 text-center">Your feedback has been successfully sent. We appreciate your input!</p>
-                        <Button
-                            variant="outline"
-                            className="mt-4"
-                            onClick={() => setIsSuccess(false)}
-                        >
-                            Send Another
-                        </Button>
+            <div className="page-container" style={{ maxWidth:680, paddingBottom:80, position:'relative', zIndex:1 }}>
+                <div style={{ textAlign:'center', marginBottom:40 }}>
+                    <div style={{ width:56,height:56,borderRadius:'50%',background:'rgba(0,240,255,0.09)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 16px' }}>
+                        <MessageSquarePlus size={26} color="#00F0FF" />
                     </div>
-                ) : (
-                    <form onSubmit={handleSubmit} className="space-y-6 animate-in fade-in duration-300">
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-700">What's on your mind?</label>
-                            <textarea
-                                value={feedback}
-                                onChange={(e) => setFeedback(e.target.value)}
-                                className="w-full h-40 p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none transition-shadow text-slate-700"
-                                placeholder="Tell us what you think..."
-                                required
-                            />
+                    <span className="dk-chip" style={{ marginBottom:14, display:'inline-block' }}>Feedback</span>
+                    <h1 style={{ fontFamily:'var(--font-head)', fontSize:'clamp(1.7rem,4vw,2.4rem)', color:'#E8EDF5', marginBottom:10 }}>
+                        We Value Your Input
+                    </h1>
+                    <p style={{ fontSize:'0.95rem', color:'#6B7A99', lineHeight:1.75, maxWidth:480, margin:'0 auto' }}>
+                        Tell us what features you'd like, or report any issues. Your feedback goes straight to{' '}
+                        <span style={{ color:'#00F0FF', fontWeight:600 }}>feedback@referkaro.com</span>.
+                    </p>
+                </div>
+
+                <div className="dk-card" style={{ padding:'40px 36px' }}>
+                    {isSuccess ? (
+                        <div style={{ textAlign:'center', padding:'40px 0' }}>
+                            <CheckCircle size={56} color="#22C55E" style={{ margin:'0 auto 16px' }} />
+                            <h3 style={{ fontFamily:'var(--font-head)', fontSize:'1.4rem', color:'#E8EDF5', marginBottom:8 }}>
+                                Thank You! 🎉
+                            </h3>
+                            <p style={{ color:'#6B7A99', marginBottom:24 }}>
+                                Your feedback has been sent. We appreciate you taking the time!
+                            </p>
+                            <button className="dk-btn-outline" onClick={() => setIsSuccess(false)}>
+                                Send Another
+                            </button>
                         </div>
-                        <Button
-                            type="submit"
-                            disabled={isSubmitting || !feedback.trim()}
-                            className="w-full h-12 text-lg"
-                        >
-                            {isSubmitting ? (
-                                <>
-                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                    Sending...
-                                </>
-                            ) : (
-                                <>
-                                    <Send className="mr-2 h-5 w-5" />
-                                    Submit Feedback
-                                </>
-                            )}
-                        </Button>
-                    </form>
-                )}
+                    ) : (
+                        <form onSubmit={handleSubmit}>
+                            <div style={{ marginBottom:20 }}>
+                                <label style={{ display:'block', marginBottom:8, color:'#B0BAD4', fontSize:'0.875rem', fontWeight:500 }}>
+                                    What's on your mind?
+                                </label>
+                                <textarea
+                                    value={feedback}
+                                    onChange={e => setFeedback(e.target.value)}
+                                    rows={6}
+                                    required
+                                    placeholder="Tell us what you think — features, bugs, improvements..."
+                                    style={{
+                                        width:'100%', padding:'12px 14px', resize:'none',
+                                        background:'rgba(255,255,255,0.04)',
+                                        border:'1px solid rgba(0,240,255,0.14)',
+                                        borderRadius:10, color:'#E8EDF5',
+                                        fontFamily:'var(--font-body)', fontSize:'0.9rem',
+                                        outline:'none', transition:'border-color 0.2s, box-shadow 0.2s',
+                                    }}
+                                    onFocus={e => {
+                                        e.currentTarget.style.borderColor = 'rgba(0,240,255,0.45)'
+                                        e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,240,255,0.08)'
+                                    }}
+                                    onBlur={e => {
+                                        e.currentTarget.style.borderColor = 'rgba(0,240,255,0.14)'
+                                        e.currentTarget.style.boxShadow = 'none'
+                                    }}
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={isSubmitting || !feedback.trim()}
+                                className="dk-btn-primary"
+                                style={{ width:'100%', justifyContent:'center', padding:'13px 24px', fontSize:'0.95rem' }}
+                            >
+                                {isSubmitting ? (
+                                    <><Loader2 size={16} style={{ animation:'spin 1s linear infinite' }} /> Sending...</>
+                                ) : (
+                                    <><Send size={16} /> Submit Feedback</>
+                                )}
+                            </button>
+                        </form>
+                    )}
+                </div>
             </div>
         </div>
     )

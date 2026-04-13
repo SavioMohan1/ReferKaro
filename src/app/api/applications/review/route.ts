@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+
+// Admin client for all privileged writes — bypasses RLS after auth verification
+const supabaseAdmin = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+)
 
 export async function POST(request: Request) {
     try {
@@ -24,16 +32,14 @@ export async function POST(request: Request) {
             )
         }
 
-        // 1. Verify the employee owns this application (via job -> employee_id)
-        // We can trust RLS, or double check here. Let's rely on RLS update policy, 
-        // but we need to fetch the application first to get the job_seeker_id and real email.
-
-        const { data: application, error: fetchError } = await supabase
+        // 1. Fetch the application with full job details and seeker profile
+        // Use admin client to avoid RLS blocking the join read
+        const { data: application, error: fetchError } = await supabaseAdmin
             .from('applications')
             .select(`
                 *,
-                job:jobs(employee_id),
-                profiles:job_seeker_id(email)
+                job:jobs(id, employee_id, referral_type),
+                profiles:job_seeker_id(email, token_balance)
             `)
             .eq('id', applicationId)
             .single()
@@ -52,7 +58,7 @@ export async function POST(request: Request) {
             )
         }
 
-        // Verify ownership
+        // 2. Verify the authenticated user owns this job
         if (application.job.employee_id !== user.id) {
             return NextResponse.json(
                 { error: 'Unauthorized to review this application' },
@@ -60,64 +66,147 @@ export async function POST(request: Request) {
             )
         }
 
-        // 2. Map 'accepted' to 'payment_pending'
-        const dbStatus = status === 'accepted' ? 'payment_pending' : status
+        const referral_type = application.referral_type || application.job?.referral_type || 'single'
 
-        const { error: updateError } = await supabase
-            .from('applications')
-            .update({ status: dbStatus })
-            .eq('id', applicationId)
-
-        if (updateError) {
-            throw updateError
-        }
-
+        let dbStatus = status
         let proxyEmail = null
 
+        // =====================================================
+        // CASE A: Employee clicks "Accept"
+        // =====================================================
+        if (status === 'accepted') {
 
+            if (referral_type === 'pooling') {
+                // --- POOLING ACCEPTANCE ---
+                // No payment required. Winner is selected, all others rejected immediately.
+                dbStatus = 'accepted'
 
-        // --- NEW: Send Email to Candidate ---
-        try {
-            const candidateEmail = application.profiles.email
-            if (candidateEmail) {
-                const { sendEmail } = await import('@/lib/resend')
+                // Reject all OTHER applications in the same pool (same job)
+                const { error: rejectError } = await supabaseAdmin
+                    .from('applications')
+                    .update({ status: 'rejected' })
+                    .eq('job_id', application.job_id)
+                    .neq('id', applicationId)
 
-                const subject = status === 'accepted'
-                    ? '🎉 Congratulations! Your Application was Accepted'
-                    : 'Application Update'
-
-                let htmlContent = `<h1>Application Update</h1><p>Your application status has been updated to: <strong>${status.toUpperCase()}</strong>.</p>`
-
-                if (status === 'accepted') {
-                    htmlContent = `
-                        <h1>🎉 Great News!</h1>
-                        <p>Your application has been <strong>ACCEPTED</strong> by the referrer!</p>
-                        <p>Log in to your ReferKaro dashboard to pay the ₹900 Success Fee and unlock your referral email securely.</p>
-                    `
-                } else if (status === 'rejected') {
-                    htmlContent = `
-                        <h1>Application Update</h1>
-                        <p>Thank you for your interest. Unfortunately, your application was not selected at this time.</p>
-                        <p>Don't lose hope! Apply to other roles on ReferKaro.</p>
-                    `
+                if (rejectError) {
+                    console.error('Failed to reject other pool members:', rejectError)
                 }
 
-                await sendEmail({
-                    to: candidateEmail,
-                    subject: subject,
-                    html: htmlContent
-                })
-            }
-        } catch (emailError) {
-            console.error('Email sending failed (non-blocking):', emailError)
-        }
-        // ------------------------------------
+                // Accept the winner
+                const { error: acceptError } = await supabaseAdmin
+                    .from('applications')
+                    .update({ status: 'accepted' })
+                    .eq('id', applicationId)
 
-        return NextResponse.json({
-            success: true,
-            status: dbStatus,
-            proxyEmail // will be null now, generated post-payment
-        })
+                if (acceptError) {
+                    return NextResponse.json({ error: 'Failed to accept application' }, { status: 500 })
+                }
+
+                // Generate Proxy Email for the Winner
+                const randomString = crypto.randomBytes(4).toString('hex')
+                const proxyAddress = `ref-${randomString}@referkaro.com`
+                await supabaseAdmin.from('proxy_emails').insert({
+                    application_id: applicationId,
+                    proxy_address: proxyAddress,
+                    real_email: application.profiles.email,
+                    is_active: true
+                })
+                proxyEmail = proxyAddress
+
+                // 4. Send acceptance email to winner
+                sendCandidateEmail(application.profiles.email, 'pooling_accepted', proxyAddress)
+
+                return NextResponse.json({ success: true, status: 'accepted', proxyEmail })
+
+            } else {
+                // --- SINGLE REFERRAL ACCEPTANCE ---
+                // Check if seeker has enough tokens (9 tokens required).
+                const seekerBalance = application.profiles.token_balance || 0
+
+                if (seekerBalance >= 9) {
+                    // Seeker has tokens — deduct immediately and generate proxy email
+                    const { error: tokenError } = await supabaseAdmin
+                        .from('profiles')
+                        .update({ token_balance: seekerBalance - 9 })
+                        .eq('id', application.job_seeker_id)
+
+                    if (tokenError) {
+                        return NextResponse.json({ error: 'Failed to deduct tokens' }, { status: 500 })
+                    }
+
+                    // Create transaction record
+                    await supabaseAdmin.from('transactions').insert({
+                        user_id: application.job_seeker_id,
+                        application_id: applicationId,
+                        amount: 0,
+                        tokens_added: -9,
+                        type: 'premium_fee',
+                        status: 'success'
+                    })
+
+                    // Generate Proxy Email
+                    const randomString = crypto.randomBytes(4).toString('hex')
+                    const proxyAddress = `ref-${randomString}@referkaro.com`
+                    await supabaseAdmin.from('proxy_emails').insert({
+                        application_id: applicationId,
+                        proxy_address: proxyAddress,
+                        real_email: application.profiles.email,
+                        is_active: true
+                    })
+                    proxyEmail = proxyAddress
+
+                    // Update application to accepted
+                    await supabaseAdmin
+                        .from('applications')
+                        .update({ status: 'accepted' })
+                        .eq('id', applicationId)
+
+                    // Notify candidate
+                    sendCandidateEmail(application.profiles.email, 'accepted', proxyAddress)
+
+                    return NextResponse.json({ success: true, status: 'accepted', proxyEmail })
+
+                } else {
+                    // Seeker lacks tokens — move to 'selected' state, prompt payment
+                    const { error: updateSelectedError } = await supabaseAdmin
+                        .from('applications')
+                        .update({
+                            status: 'selected',
+                            selected_at: new Date().toISOString()
+                        })
+                        .eq('id', applicationId)
+
+                    if (updateSelectedError) {
+                        return NextResponse.json({ error: 'Failed to update application' }, { status: 500 })
+                    }
+
+                    // Email seeker to buy tokens
+                    sendCandidateEmail(application.profiles.email, 'selected', null)
+
+                    return NextResponse.json({ success: true, status: 'selected', proxyEmail: null })
+                }
+            }
+        }
+
+        // =====================================================
+        // CASE B: Employee clicks "Reject"
+        // =====================================================
+        if (status === 'rejected') {
+            const { error: updateError } = await supabaseAdmin
+                .from('applications')
+                .update({ status: 'rejected' })
+                .eq('id', applicationId)
+
+            if (updateError) {
+                return NextResponse.json({ error: 'Failed to update application status' }, { status: 500 })
+            }
+
+            sendCandidateEmail(application.profiles.email, 'rejected', null)
+
+            return NextResponse.json({ success: true, status: 'rejected', proxyEmail: null })
+        }
+
+        return NextResponse.json({ error: 'Invalid status value' }, { status: 400 })
 
     } catch (error: any) {
         console.error('Error updating application:', error)
@@ -125,5 +214,54 @@ export async function POST(request: Request) {
             { error: error?.message || 'Internal Server Error', details: error },
             { status: 500 }
         )
+    }
+}
+
+async function sendCandidateEmail(to: string, scenario: string, proxyEmail: string | null) {
+    try {
+        const { sendEmail } = await import('@/lib/resend')
+
+        const scenarios: Record<string, { subject: string; html: string }> = {
+            accepted: {
+                subject: '🎉 Congratulations! Your Referral is Secured',
+                html: `
+                    <h1>🎉 Great News!</h1>
+                    <p>Your application has been <strong>ACCEPTED</strong> by the referrer and the required tokens have been processed.</p>
+                    <p>Log in to your ReferKaro dashboard to view your secure proxy referral email.</p>
+                `
+            },
+            pooling_accepted: {
+                subject: '🎉 You Won the Pool! Your Referral is Confirmed',
+                html: `
+                    <h1>🏆 You Were Selected!</h1>
+                    <p>You have been chosen as the winner of the referral pool!</p>
+                    <p>Your proxy referral email is: <strong>${proxyEmail}</strong></p>
+                    <p>Log in to your ReferKaro dashboard for full details.</p>
+                `
+            },
+            selected: {
+                subject: '⚠️ Action Required: Complete Your Referral',
+                html: `
+                    <h1>You've Been Selected!</h1>
+                    <p>The employee has selected you for a Premium Referral.</p>
+                    <p>However, you need <strong>9 tokens</strong> to finalize. Please log in within <strong>24 hours</strong> to buy tokens, or the offer will expire.</p>
+                `
+            },
+            rejected: {
+                subject: 'Application Update from ReferKaro',
+                html: `
+                    <h1>Application Update</h1>
+                    <p>Thank you for your interest. Unfortunately, your application was not selected at this time.</p>
+                    <p>Don't give up — apply to other roles on ReferKaro!</p>
+                `
+            }
+        }
+
+        const template = scenarios[scenario]
+        if (template) {
+            await sendEmail({ to, subject: template.subject, html: template.html })
+        }
+    } catch (err) {
+        console.error('Email sending failed (non-blocking):', err)
     }
 }

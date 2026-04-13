@@ -2,92 +2,49 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { X, Upload, FileText, CheckCircle } from 'lucide-react'
+import { X, Upload, CheckCircle, Loader2 } from 'lucide-react'
 
 interface ApplicationModalProps {
-    jobId: string
-    employeeId: string
-    jobTitle: string
-    onClose: () => void
-    onSuccess: () => void
+    jobId: string; employeeId: string; jobTitle: string
+    onClose: () => void; onSuccess: () => void
 }
 
-export default function ApplicationModal({
-    jobId,
-    employeeId,
-    jobTitle,
-    onClose,
-    onSuccess
-}: ApplicationModalProps) {
+export default function ApplicationModal({ jobId, employeeId, jobTitle, onClose, onSuccess }: ApplicationModalProps) {
     const [loading, setLoading] = useState(false)
     const [resumeFile, setResumeFile] = useState<File | null>(null)
-    const [formData, setFormData] = useState({
-        cover_letter: '',
-        linkedin_url: '',
-        portfolio_url: '',
-    })
+    const [formData, setFormData] = useState({ cover_letter: '', linkedin_url: '', portfolio_url: '' })
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
-
         try {
             const supabase = createClient()
             const { data: { user } } = await supabase.auth.getUser()
-
-            if (!user) {
-                alert('Please login to apply')
-                return
-            }
+            if (!user) { alert('Please login to apply'); return }
 
             let resumeUrl = ''
-
-            // Upload resume if selected
             if (resumeFile) {
                 const fileExt = resumeFile.name.split('.').pop()
                 const fileName = `${user.id}/${Date.now()}.${fileExt}`
-
-                const { error: uploadError } = await supabase.storage
-                    .from('resumes')
-                    .upload(fileName, resumeFile)
-
-                if (uploadError) {
-                    throw new Error('Resume upload failed: ' + uploadError.message)
-                }
-
-                // Get public URL (or signed URL depending on policy, public is easier for MVP)
-                // Note: For private buckets we usually use createSignedUrl, but for this MVP 
-                // we'll assume the bucket is private but we generate a signed URL on view.
-                // However, storing the path is better. Let's store the full path.
+                const { error: uploadError } = await supabase.storage.from('resumes').upload(fileName, resumeFile)
+                if (uploadError) throw new Error('Resume upload failed: ' + uploadError.message)
                 resumeUrl = fileName
             }
 
-            // Call API route to handle application with token deduction
             const response = await fetch('/api/applications/apply', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    job_id: jobId,
-                    employee_id: employeeId,
+                    job_id: jobId, employee_id: employeeId,
                     cover_letter: formData.cover_letter,
                     linkedin_url: formData.linkedin_url || null,
                     portfolio_url: formData.portfolio_url || null,
                     resume_url: resumeUrl || null,
                 }),
             })
-
             const result = await response.json()
-
-            if (!response.ok) {
-                alert(result.error || 'Failed to submit application')
-                setLoading(false)
-                return
-            }
-
-            // Success
-            onSuccess()
-            onClose()
+            if (!response.ok) { alert(result.error || 'Failed to submit application'); setLoading(false); return }
+            onSuccess(); onClose()
         } catch (error) {
             console.error('Error submitting application:', error)
             alert('An error occurred. Please try again.')
@@ -95,104 +52,144 @@ export default function ApplicationModal({
         }
     }
 
+    const inputStyle: React.CSSProperties = {
+        width: '100%', padding: '10px 14px', borderRadius: 8, resize: 'none' as const,
+        background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(0,240,255,0.14)',
+        color: '#E8EDF5', fontFamily: 'var(--font-body)', fontSize: '0.9rem', outline: 'none',
+    }
+
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        /* Backdrop */
+        <div style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(6px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
+        }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+
+            <div style={{
+                background: '#080E1C',
+                border: '1px solid rgba(0,240,255,0.16)',
+                borderRadius: 20,
+                width: '100%', maxWidth: 620,
+                maxHeight: '90vh', overflowY: 'auto',
+                boxShadow: '0 0 60px rgba(0,240,255,0.08)',
+            }}>
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b">
+                <div style={{
+                    display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+                    padding: '28px 32px 24px',
+                    borderBottom: '1px solid rgba(0,240,255,0.08)',
+                }}>
                     <div>
-                        <h2 className="text-2xl font-bold">Request Profile Review & Referral</h2>
-                        <p className="text-gray-600 mt-1">{jobTitle}</p>
+                        <h2 style={{ fontFamily: 'var(--font-head)', fontSize: '1.2rem', color: '#E8EDF5', marginBottom: 4 }}>
+                            Request Profile Review &amp; Referral
+                        </h2>
+                        <p style={{ fontSize: '0.875rem', color: '#00F0FF', fontWeight: 600 }}>{jobTitle}</p>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                        <X className="h-6 w-6" />
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7A99', padding: 4, transition: 'color 0.2s' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = '#E8EDF5')}
+                        onMouseLeave={e => (e.currentTarget.style.color = '#6B7A99')}
+                    >
+                        <X size={20} />
                     </button>
                 </div>
 
                 {/* Form */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <p className="text-sm text-blue-800">
-                            <strong>Note:</strong> Submitting this application will deduct 1 token from your balance.
-                        </p>
+                <form onSubmit={handleSubmit} style={{ padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: 22 }}>
+                    {/* Token notice */}
+                    <div style={{
+                        background: 'rgba(0,240,255,0.05)', border: '1px solid rgba(0,240,255,0.18)',
+                        borderRadius: 10, padding: '12px 16px',
+                        fontSize: '0.85rem', color: '#6B7A99',
+                    }}>
+                        <strong style={{ color: '#E8EDF5' }}>Heads up:</strong> Submitting this application will deduct{' '}
+                        <strong style={{ color: '#00F0FF' }}>1 token</strong> from your balance.
                     </div>
 
+                    {/* Cover letter */}
                     <div>
-                        <label className="block text-sm font-medium mb-2">
-                            Cover Letter *
+                        <label style={{ display: 'block', marginBottom: 8, fontSize: '0.85rem', fontWeight: 500, color: '#B0BAD4' }}>
+                            Cover Letter <span style={{ color: '#EF4444' }}>*</span>
                         </label>
-                        <textarea
-                            required
-                            rows={8}
-                            className="w-full rounded-md border p-3"
+                        <textarea rows={7} required style={inputStyle}
                             value={formData.cover_letter}
-                            onChange={(e) => setFormData({ ...formData, cover_letter: e.target.value })}
+                            onChange={e => setFormData({ ...formData, cover_letter: e.target.value })}
                             placeholder="Introduce yourself and explain why you're a great fit for this role..."
+                            onFocus={e => { e.currentTarget.style.borderColor = 'rgba(0,240,255,0.45)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,240,255,0.08)' }}
+                            onBlur={e => { e.currentTarget.style.borderColor = 'rgba(0,240,255,0.14)'; e.currentTarget.style.boxShadow = 'none' }}
                         />
                     </div>
 
+                    {/* LinkedIn */}
                     <div>
-                        <label className="block text-sm font-medium mb-2">
+                        <label style={{ display: 'block', marginBottom: 8, fontSize: '0.85rem', fontWeight: 500, color: '#B0BAD4' }}>
                             LinkedIn Profile URL
                         </label>
-                        <input
-                            type="url"
-                            className="w-full rounded-md border p-2"
+                        <input type="url" style={inputStyle}
                             value={formData.linkedin_url}
-                            onChange={(e) => setFormData({ ...formData, linkedin_url: e.target.value })}
+                            onChange={e => setFormData({ ...formData, linkedin_url: e.target.value })}
                             placeholder="https://linkedin.com/in/yourprofile"
+                            onFocus={e => { e.currentTarget.style.borderColor = 'rgba(0,240,255,0.45)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,240,255,0.08)' }}
+                            onBlur={e => { e.currentTarget.style.borderColor = 'rgba(0,240,255,0.14)'; e.currentTarget.style.boxShadow = 'none' }}
                         />
                     </div>
 
+                    {/* Portfolio */}
                     <div>
-                        <label className="block text-sm font-medium mb-2">
-                            Portfolio URL (Optional)
+                        <label style={{ display: 'block', marginBottom: 8, fontSize: '0.85rem', fontWeight: 500, color: '#B0BAD4' }}>
+                            Portfolio URL <span style={{ color: '#6B7A99', fontWeight: 400 }}>(optional)</span>
                         </label>
-                        <input
-                            type="url"
-                            className="w-full rounded-md border p-2"
+                        <input type="url" style={inputStyle}
                             value={formData.portfolio_url}
-                            onChange={(e) => setFormData({ ...formData, portfolio_url: e.target.value })}
+                            onChange={e => setFormData({ ...formData, portfolio_url: e.target.value })}
                             placeholder="https://yourportfolio.com"
+                            onFocus={e => { e.currentTarget.style.borderColor = 'rgba(0,240,255,0.45)'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,240,255,0.08)' }}
+                            onBlur={e => { e.currentTarget.style.borderColor = 'rgba(0,240,255,0.14)'; e.currentTarget.style.boxShadow = 'none' }}
                         />
                     </div>
 
+                    {/* Resume upload */}
                     <div>
-                        <label className="block text-sm font-medium mb-2">
-                            Resume (PDF/DOCX)
+                        <label style={{ display: 'block', marginBottom: 8, fontSize: '0.85rem', fontWeight: 500, color: '#B0BAD4' }}>
+                            Resume (PDF / DOCX)
                         </label>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
-                            <input
-                                type="file"
-                                id="resume-upload"
-                                className="hidden"
+                        <div style={{
+                            border: '2px dashed rgba(0,240,255,0.2)', borderRadius: 12, padding: '24px 20px',
+                            textAlign: 'center', cursor: 'pointer', transition: 'border-color 0.2s',
+                        }}
+                            onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(0,240,255,0.45)')}
+                            onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(0,240,255,0.2)')}
+                        >
+                            <input type="file" id="resume-upload" style={{ display: 'none' }}
                                 accept=".pdf,.doc,.docx"
-                                onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+                                onChange={e => setResumeFile(e.target.files?.[0] || null)}
                             />
-                            <label htmlFor="resume-upload" className="cursor-pointer block">
+                            <label htmlFor="resume-upload" style={{ cursor: 'pointer', display: 'block' }}>
                                 {resumeFile ? (
-                                    <div className="flex items-center justify-center gap-2 text-green-600">
-                                        <CheckCircle className="h-6 w-6" />
-                                        <span className="font-medium">{resumeFile.name}</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: '#22C55E' }}>
+                                        <CheckCircle size={20} />
+                                        <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>{resumeFile.name}</span>
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col items-center gap-2 text-gray-500">
-                                        <Upload className="h-8 w-8 text-gray-400" />
-                                        <span>Click to upload resume</span>
-                                        <span className="text-xs text-gray-400">Max 5MB (PDF or DOCX)</span>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, color: '#6B7A99' }}>
+                                        <Upload size={26} color="rgba(0,240,255,0.4)" />
+                                        <span style={{ fontSize: '0.875rem' }}>Click to upload resume</span>
+                                        <span style={{ fontSize: '0.75rem', color: '#6B7A99' }}>Max 5MB · PDF or DOCX</span>
                                     </div>
                                 )}
                             </label>
                         </div>
                     </div>
 
-                    <div className="flex gap-4 pt-4">
-                        <Button type="submit" disabled={loading} className="flex-1">
-                            {loading ? 'Submitting...' : 'Request Review & Referral (1 Token)'}
-                        </Button>
-                        <Button type="button" variant="outline" onClick={onClose}>
+                    {/* Actions */}
+                    <div style={{ display: 'flex', gap: 12, paddingTop: 4 }}>
+                        <button type="submit" disabled={loading} className="dk-btn-primary"
+                            style={{ flex: 1, justifyContent: 'center', padding: '13px 20px', fontSize: '0.9rem', opacity: loading ? 0.65 : 1 }}>
+                            {loading ? <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> Submitting...</> : 'Request Review & Referral (1 Token)'}
+                        </button>
+                        <button type="button" onClick={onClose} className="dk-btn-outline" style={{ padding: '13px 20px' }}>
                             Cancel
-                        </Button>
+                        </button>
                     </div>
                 </form>
             </div>

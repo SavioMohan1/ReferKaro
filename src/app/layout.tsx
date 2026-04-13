@@ -8,8 +8,8 @@ import { createClient } from '@/lib/supabase/server'
 import GlobalNavbar from '@/components/layout/global-navbar'
 
 export const metadata: Metadata = {
-    title: 'ReferKaro',
-    description: 'Validating Referrals, One Click at a Time.',
+    title: 'ReferKaro — Get Referred, Not Ignored',
+    description: 'ReferKaro connects job seekers with verified employees who submit real referrals. Skip the ATS black hole.',
 }
 
 export default async function RootLayout({

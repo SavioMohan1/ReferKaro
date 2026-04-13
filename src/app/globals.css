@@ -1,78 +1,274 @@
+/* ── Google Fonts (must be first) ── */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-    :root {
-        --background: 0 0% 100%;
-        --foreground: 222.2 84% 4.9%;
-        --card: 0 0% 100%;
-        --card-foreground: 222.2 84% 4.9%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 222.2 84% 4.9%;
-        --primary: 221.2 83.2% 53.3%;
-        --primary-foreground: 210 40% 98%;
-        --secondary: 210 40% 96.1%;
-        --secondary-foreground: 222.2 47.4% 11.2%;
-        --muted: 210 40% 96.1%;
-        --muted-foreground: 215.4 16.3% 46.9%;
-        --accent: 210 40% 96.1%;
-        --accent-foreground: 222.2 47.4% 11.2%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 210 40% 98%;
-        --border: 214.3 31.8% 91.4%;
-        --input: 214.3 31.8% 91.4%;
-        --ring: 221.2 83.2% 53.3%;
-        --radius: 0.5rem;
-    }
 
-    .dark {
-        --background: 222.2 84% 4.9%;
-        --foreground: 210 40% 98%;
-        --card: 222.2 84% 4.9%;
-        --card-foreground: 210 40% 98%;
-        --popover: 222.2 84% 4.9%;
-        --popover-foreground: 210 40% 98%;
-        --primary: 217.2 91.2% 59.8%;
-        --primary-foreground: 222.2 47.4% 11.2%;
-        --secondary: 217.2 32.6% 17.5%;
-        --secondary-foreground: 210 40% 98%;
-        --muted: 217.2 32.6% 17.5%;
-        --muted-foreground: 215 20.2% 65.1%;
-        --accent: 217.2 32.6% 17.5%;
-        --accent-foreground: 210 40% 98%;
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 210 40% 98%;
-        --border: 217.2 32.6% 17.5%;
-        --input: 217.2 32.6% 17.5%;
-        --ring: 224.3 76.3% 48%;
-    }
+/* ── Design Tokens ── */
+:root {
+  --bg:          #050A14;
+  --bg-card:     rgba(255,255,255,0.035);
+  --clr-accent:  #00F0FF;
+  --clr-violet:  #7B5EFF;
+  --clr-text:    #E8EDF5;
+  --clr-muted:   #6B7A99;
+  --brd:         rgba(0,240,255,0.14);
+  --glow-sm:     0 0 24px rgba(0,240,255,0.1);
+  --radius-card: 16px;
+  --radius-btn:  8px;
+  --font-head:   'Syne', sans-serif;
+  --font-body:   'DM Sans', sans-serif;
+
+  /* Shadcn/Tailwind compat */
+  --background: 220 30% 4%;
+  --foreground: 210 25% 92%;
+  --card: 220 22% 7%;
+  --card-foreground: 210 25% 92%;
+  --popover: 220 22% 7%;
+  --popover-foreground: 210 25% 92%;
+  --primary: 185 100% 50%;
+  --primary-foreground: 220 30% 4%;
+  --secondary: 220 18% 12%;
+  --secondary-foreground: 210 25% 80%;
+  --muted: 220 18% 12%;
+  --muted-foreground: 220 14% 42%;
+  --accent: 185 100% 50%;
+  --accent-foreground: 220 30% 4%;
+  --destructive: 0 60% 42%;
+  --destructive-foreground: 210 25% 92%;
+  --border: 220 18% 14%;
+  --input: 220 18% 14%;
+  --ring: 185 100% 50%;
+  --radius: 0.5rem;
 }
 
+/* ── Base ── */
 @layer base {
-    * {
-        @apply border-border;
-    }
-
-    body {
-        @apply bg-background text-foreground transition-colors duration-300;
-    }
+  * { @apply border-border; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: #050A14;
+    color: #E8EDF5;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4, h5 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+  }
+  input, textarea, select {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(0,240,255,0.15);
+    color: #E8EDF5;
+    border-radius: 8px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input::placeholder, textarea::placeholder { color: #6B7A99; }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: rgba(0,240,255,0.45);
+    box-shadow: 0 0 0 3px rgba(0,240,255,0.08);
+  }
+  select option { background: #0D1423; }
+  label { color: #B0BAD4; font-size: 0.875rem; font-weight: 500; }
+  a { color: #00F0FF; }
 }
 
+/* ── Components ── */
+@layer components {
+
+  /* Page shells */
+  .page-wrapper {
+    min-height: 100vh;
+    background: #050A14;
+    color: #E8EDF5;
+    font-family: 'DM Sans', sans-serif;
+    padding-top: 24px;
+  }
+  .page-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  .page-header {
+    padding: 48px 0 32px;
+    border-bottom: 1px solid rgba(0,240,255,0.08);
+    margin-bottom: 40px;
+  }
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 700;
+    color: #E8EDF5;
+    margin-bottom: 6px;
+  }
+  .page-sub {
+    font-size: 0.95rem;
+    color: #6B7A99;
+  }
+
+  /* Dark card */
+  .dk-card {
+    background: rgba(255,255,255,0.033);
+    border: 1px solid rgba(0,240,255,0.12);
+    border-radius: 16px;
+    box-shadow: 0 0 20px rgba(0,240,255,0.06);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s;
+  }
+  .dk-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0 28px rgba(0,240,255,0.15);
+    border-color: rgba(0,240,255,0.26);
+  }
+  .dk-card-inner { padding: 28px; }
+
+  /* Buttons */
+  .dk-btn-primary {
+    background: #00F0FF;
+    color: #050A14;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.88rem;
+    padding: 10px 22px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: box-shadow 0.2s, transform 0.15s;
+  }
+  .dk-btn-primary:hover {
+    box-shadow: 0 0 18px rgba(0,240,255,0.38);
+    transform: translateY(-1px);
+  }
+  .dk-btn-primary:disabled {
+    opacity: 0.5; cursor: not-allowed; transform: none;
+  }
+
+  .dk-btn-outline {
+    background: transparent;
+    color: #00F0FF;
+    border: 1px solid rgba(0,240,255,0.32);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.88rem;
+    padding: 10px 22px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  }
+  .dk-btn-outline:hover {
+    border-color: #00F0FF;
+    box-shadow: 0 0 12px rgba(0,240,255,0.16);
+    transform: translateY(-1px);
+  }
+
+  .dk-btn-ghost {
+    background: transparent;
+    color: #6B7A99;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    transition: color 0.2s, background 0.2s;
+  }
+  .dk-btn-ghost:hover {
+    color: #E8EDF5;
+    background: rgba(255,255,255,0.05);
+  }
+
+  /* Chips / badges */
+  .dk-chip {
+    display: inline-block;
+    border: 1px solid rgba(0,240,255,0.22);
+    color: #00F0FF;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+
+  /* Inputs (for forms in pages that don't use Tailwind directly) */
+  .dk-input {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(0,240,255,0.14);
+    border-radius: 8px;
+    color: #E8EDF5;
+    padding: 10px 14px;
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .dk-input::placeholder { color: #6B7A99; }
+  .dk-input:focus {
+    border-color: rgba(0,240,255,0.45);
+    box-shadow: 0 0 0 3px rgba(0,240,255,0.08);
+  }
+
+  /* Glow orb helper */
+  .glow-orb {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    will-change: transform;
+    animation: pulse-orb 7s ease-in-out infinite;
+  }
+  .glow-cyan  { background: radial-gradient(circle, rgba(0,240,255,0.18) 0%, transparent 70%); filter: blur(80px); }
+  .glow-violet{ background: radial-gradient(circle, rgba(123,94,255,0.15) 0%, transparent 70%); filter: blur(80px); animation-direction: reverse; }
+
+  /* Scroll-reveal */
+  .reveal {
+    opacity: 0;
+    transform: translateY(26px);
+    transition: opacity 0.55s ease, transform 0.55s ease;
+  }
+  .reveal.visible { opacity: 1; transform: none; }
+  .reveal-1 { transition-delay: 0.08s; }
+  .reveal-2 { transition-delay: 0.16s; }
+  .reveal-3 { transition-delay: 0.24s; }
+
+  /* Divider */
+  .dk-divider { height: 1px; background: rgba(0,240,255,0.09); margin: 24px 0; }
+
+  /* Status badges */
+  .status-pending  { background: rgba(251,146,60,0.1);  color: #FB923C; border: 1px solid rgba(251,146,60,0.22); border-radius:999px; padding:3px 10px; font-size:11px; font-weight:600; }
+  .status-selected { background: rgba(251,191,36,0.1);  color: #F59E0B; border: 1px solid rgba(251,191,36,0.22); border-radius:999px; padding:3px 10px; font-size:11px; font-weight:600; }
+  .status-accepted { background: rgba(34,197,94,0.1);   color: #22C55E; border: 1px solid rgba(34,197,94,0.22);  border-radius:999px; padding:3px 10px; font-size:11px; font-weight:600; }
+  .status-rejected { background: rgba(239,68,68,0.1);   color: #EF4444; border: 1px solid rgba(239,68,68,0.22);  border-radius:999px; padding:3px 10px; font-size:11px; font-weight:600; }
+  .status-expired  { background: rgba(107,114,153,0.1); color: #6B7A99; border: 1px solid rgba(107,114,153,0.18);border-radius:999px; padding:3px 10px; font-size:11px; font-weight:600; }
+}
+
+/* ── Keyframes ── */
 @layer utilities {
-    @keyframes shimmer {
-        0% {
-            background-position: -1000px 0;
-        }
-
-        100% {
-            background-position: 1000px 0;
-        }
-    }
-
-    .animate-shimmer {
-        animation: shimmer 2s infinite linear;
-        background: linear-gradient(to right, #f1f5f9 4%, #e2e8f0 25%, #f1f5f9 36%);
-        background-size: 1000px 100%;
-    }
+  @keyframes pulse-orb {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50%       { opacity: 0.65; transform: scale(1.08); }
+  }
+  @keyframes shimmer {
+    0%   { background-position: -1000px 0; }
+    100% { background-position:  1000px 0; }
+  }
+  .animate-shimmer {
+    animation: shimmer 2s infinite linear;
+    background: linear-gradient(to right,rgba(0,240,255,0.04) 4%,rgba(0,240,255,0.1) 25%,rgba(0,240,255,0.04) 36%);
+    background-size: 1000px 100%;
+  }
 }

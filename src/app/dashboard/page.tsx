@@ -7,36 +7,53 @@ import LegalDisclaimerModal from '@/components/auth/legal-disclaimer-modal'
 export default async function DashboardPage() {
     const supabase = await createClient()
 
-    // Check if user is authenticated
     const { data: { user } } = await supabase.auth.getUser()
+    if (!user) redirect('/login')
 
-    if (!user) {
-        redirect('/login')
-    }
-
-    // Get user profile
     const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
+        .from('profiles').select('*').eq('id', user.id).single()
 
-    // If no profile exists, redirect to onboarding
-    if (error || !profile) {
-        redirect('/onboarding')
-    }
+    if (error || !profile) redirect('/onboarding')
 
-    // Check if user has accepted terms
     const showLegalModal = !profile.has_accepted_terms
 
-    // Render appropriate dashboard based on role
+    // Fetch recent activity depending on role
+    let recentActivity: any[] = []
+
+    if (profile.role === 'job_seeker') {
+        // Last 5 applications this seeker made
+        const { data } = await supabase
+            .from('applications')
+            .select(`
+                id, status, applied_at,
+                jobs:job_id(role_title, company)
+            `)
+            .eq('job_seeker_id', user.id)
+            .order('applied_at', { ascending: false })
+            .limit(5)
+        recentActivity = data || []
+    } else {
+        // Last 5 applications received by this employee
+        const { data } = await supabase
+            .from('applications')
+            .select(`
+                id, status, applied_at,
+                jobs:job_id(role_title, company),
+                profiles:job_seeker_id(full_name)
+            `)
+            .eq('employee_id', user.id)
+            .order('applied_at', { ascending: false })
+            .limit(5)
+        recentActivity = data || []
+    }
+
     return (
         <>
             {showLegalModal && <LegalDisclaimerModal />}
             {profile.role === 'job_seeker' ? (
-                <JobSeekerDashboard profile={profile} user={user} />
+                <JobSeekerDashboard profile={profile} user={user} recentActivity={recentActivity} />
             ) : (
-                <EmployeeDashboard profile={profile} user={user} />
+                <EmployeeDashboard profile={profile} user={user} recentActivity={recentActivity} />
             )}
         </>
     )

@@ -2,34 +2,15 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, CheckCircle2 } from 'lucide-react'
+import { Loader2, CheckCircle2, Zap, Star } from 'lucide-react'
 import Script from 'next/script'
 import { useRouter } from 'next/navigation'
 
-declare global {
-    interface Window {
-        Razorpay: any;
-    }
-}
+declare global { interface Window { Razorpay: any } }
 
 const PLANS = [
-    {
-        id: 'starter',
-        name: 'Starter Pack',
-        tokens: 3,
-        price: 99,
-        description: 'Perfect for trying out the platform.'
-    },
-    {
-        id: 'pro',
-        name: 'Pro Pack',
-        tokens: 10,
-        price: 299,
-        description: 'Best value for serious job seekers.',
-        popular: true
-    }
+    { id:'starter', name:'Starter Pack', tokens:3, price:99,  description:'Perfect for trying out the platform.', popular:false },
+    { id:'pro',     name:'Pro Pack',     tokens:10, price:299, description:'Best value for serious job seekers.',  popular:true  },
 ]
 
 export default function BuyTokensPage() {
@@ -40,66 +21,37 @@ export default function BuyTokensPage() {
 
     const handlePurchase = async (plan: typeof PLANS[0]) => {
         setLoading(plan.id)
-
         try {
-            // 1. Create Order
             const response = await fetch('/api/payments/create-order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    planId: plan.id,
-                    amount: plan.price,
-                    tokens: plan.tokens
-                })
+                body: JSON.stringify({ planId: plan.id, amount: plan.price, tokens: plan.tokens }),
             })
-
             const data = await response.json()
-
             if (!response.ok) throw new Error(data.error)
 
-            // 2. Open Razorpay Checkout
             const options = {
-                key: data.keyId,
-                amount: data.amount,
-                currency: 'INR',
-                name: 'ReferKaro',
-                description: `Purchase ${plan.tokens} Tokens`,
+                key: data.keyId, amount: data.amount, currency: 'INR',
+                name: 'ReferKaro', description: `Purchase ${plan.tokens} Tokens`,
                 order_id: data.orderId,
-                handler: async function (response: any) {
-                    // 3. Verify Payment
+                handler: async (response: any) => {
                     const verifyRes = await fetch('/api/payments/verify', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_signature: response.razorpay_signature
-                        })
+                            razorpay_signature: response.razorpay_signature,
+                        }),
                     })
-
                     const verifyData = await verifyRes.json()
-
-                    if (verifyData.success) {
-                        setAddedTokens(plan.tokens)
-                        setPaymentSuccess(true)
-                        router.refresh()
-                    } else {
-                        alert('Payment Verification Failed')
-                    }
+                    if (verifyData.success) { setAddedTokens(plan.tokens); setPaymentSuccess(true); router.refresh() }
+                    else alert('Payment Verification Failed')
                 },
-                prefill: {
-                    name: '',
-                    email: '',
-                    contact: ''
-                },
-                theme: {
-                    color: '#0f172a'
-                }
+                prefill: { name:'', email:'', contact:'' },
+                theme: { color:'#00F0FF' },
             }
-
             const rzp1 = new window.Razorpay(options)
             rzp1.open()
-
         } catch (error) {
             console.error('Purchase failed:', error)
             alert('Something went wrong. Please try again.')
@@ -110,95 +62,94 @@ export default function BuyTokensPage() {
 
     if (paymentSuccess) {
         return (
-            <div className="container mx-auto py-20 px-4 flex items-center justify-center min-h-[60vh]">
-                <Card className="max-w-md w-full text-center border-green-200 shadow-xl bg-green-50/50">
-                    <CardHeader>
-                        <div className="mx-auto bg-green-100 p-3 rounded-full w-fit mb-4">
-                            <CheckCircle2 className="h-12 w-12 text-green-600" />
-                        </div>
-                        <CardTitle className="text-2xl text-green-800">Payment Successful!</CardTitle>
-                        <CardDescription className="text-green-700 font-medium">
-                            {addedTokens} Tokens have been added to your wallet.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-gray-600">
-                            You are now ready to apply for referrals. Good luck!
-                        </p>
-                    </CardContent>
-                    <CardFooter>
-                        <Button
-                            className="w-full bg-green-600 hover:bg-green-700"
-                            onClick={() => router.push('/dashboard')}
-                        >
-                            Go to Dashboard
-                        </Button>
-                    </CardFooter>
-                </Card>
+            <div style={{ minHeight:'80vh', display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
+                <div className="dk-card" style={{ maxWidth:420, width:'100%', padding:'48px 36px', textAlign:'center' }}>
+                    <div style={{ width:72,height:72,borderRadius:'50%',background:'rgba(34,197,94,0.12)',border:'1px solid rgba(34,197,94,0.25)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 20px' }}>
+                        <CheckCircle2 size={36} color="#22C55E" />
+                    </div>
+                    <h2 style={{ fontFamily:'var(--font-head)', fontSize:'1.5rem', color:'#22C55E', marginBottom:8 }}>
+                        Payment Successful!
+                    </h2>
+                    <p style={{ color:'#6B7A99', marginBottom:28 }}>
+                        <strong style={{ color:'#E8EDF5' }}>{addedTokens} Tokens</strong> have been added to your wallet. You're ready to apply!
+                    </p>
+                    <button className="dk-btn-primary" onClick={() => router.push('/dashboard')} style={{ width:'100%', justifyContent:'center' }}>
+                        Go to Dashboard →
+                    </button>
+                </div>
             </div>
         )
     }
 
     return (
-        <div className="container mx-auto py-10 px-4 max-w-5xl">
+        <div className="page-wrapper" style={{ paddingTop:80, paddingBottom:80, position:'relative', overflow:'hidden' }}>
             <Script src="https://checkout.razorpay.com/v1/checkout.js" />
+            <div className="glow-orb glow-cyan"   style={{ width:380, height:380, top:-60, right:-60, opacity:0.4 }} />
+            <div className="glow-orb glow-violet"  style={{ width:320, height:320, bottom:-60, left:-60, opacity:0.35 }} />
 
-            <div className="text-center mb-10">
-                <h1 className="text-3xl font-bold tracking-tight mb-2">Buy Tokens</h1>
-                <p className="text-muted-foreground">Invest in your career. Get referred today.</p>
-            </div>
+            <div className="page-container" style={{ maxWidth:780, position:'relative', zIndex:1 }}>
+                <div style={{ textAlign:'center', marginBottom:48 }}>
+                    <span className="dk-chip" style={{ marginBottom:14, display:'inline-block' }}>Token Store</span>
+                    <h1 style={{ fontFamily:'var(--font-head)', fontSize:'clamp(1.7rem,4vw,2.6rem)', color:'#E8EDF5', marginBottom:10 }}>
+                        Buy Tokens
+                    </h1>
+                    <p style={{ color:'#6B7A99', fontSize:'0.95rem' }}>
+                        Invest in your career. Every token is a guaranteed human review.
+                    </p>
+                </div>
 
-            <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
-                {PLANS.map((plan) => (
-                    <Card key={plan.id} className={`relative flex flex-col ${plan.popular ? 'border-primary shadow-lg scale-105' : ''}`}>
-                        {plan.popular && (
-                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full">
-                                MOST POPULAR
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))', gap:24 }}>
+                    {PLANS.map(plan => (
+                        <div
+                            key={plan.id}
+                            className="dk-card"
+                            style={{
+                                padding:'36px 32px', position:'relative', overflow:'hidden',
+                                border: plan.popular ? '1px solid rgba(0,240,255,0.45)' : undefined,
+                                boxShadow: plan.popular ? '0 0 36px rgba(0,240,255,0.12)' : undefined,
+                                transform: plan.popular ? 'scale(1.03)' : undefined,
+                            }}
+                        >
+                            {plan.popular && (
+                                <div style={{
+                                    position:'absolute', top:16, right:16,
+                                    background:'rgba(0,240,255,0.12)', color:'#00F0FF',
+                                    fontSize:10, fontWeight:700, letterSpacing:'0.08em',
+                                    padding:'4px 10px', borderRadius:999,
+                                    border:'1px solid rgba(0,240,255,0.25)',
+                                }}>★ BEST VALUE</div>
+                            )}
+                            <div style={{ width:44, height:44, borderRadius:10, background:'rgba(0,240,255,0.08)', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:20 }}>
+                                {plan.popular ? <Star size={22} color="#00F0FF" /> : <Zap size={22} color="#00F0FF" />}
                             </div>
-                        )}
-                        <CardHeader>
-                            <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                            <CardDescription>{plan.description}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="flex-1">
-                            <div className="text-4xl font-bold mb-4">
-                                ₹{plan.price}
-                                <span className="text-sm font-normal text-muted-foreground"> / one-time</span>
-                            </div>
-                            <ul className="space-y-2">
-                                <li className="flex items-center gap-2">
-                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                    <span className="font-bold">{plan.tokens} Tokens</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                    <span>{plan.tokens} Application Opportunities</span>
-                                </li>
-                                <li className="flex items-center gap-2">
-                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                    <span>Direct connection to employees</span>
-                                </li>
+                            <div style={{ fontFamily:'var(--font-head)', fontSize:'0.85rem', fontWeight:700, color:'#6B7A99', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:8 }}>{plan.name}</div>
+                            <div style={{ fontFamily:'var(--font-head)', fontSize:'2.4rem', fontWeight:800, color:'#E8EDF5', marginBottom:4 }}>₹{plan.price}</div>
+                            <div style={{ fontSize:'0.8rem', color:'#6B7A99', marginBottom:4 }}>one-time payment</div>
+                            <p style={{ fontSize:'0.875rem', color:'#6B7A99', marginBottom:24, lineHeight:1.6 }}>{plan.description}</p>
+
+                            <ul style={{ listStyle:'none', padding:0, margin:'0 0 28px' }}>
+                                {[`${plan.tokens} Tokens`, `${plan.tokens} Application Slots`, 'Direct employee connection', 'Email status tracking'].map(f => (
+                                    <li key={f} style={{ fontSize:'0.875rem', color:'#6B7A99', padding:'7px 0', display:'flex', alignItems:'center', gap:10, borderBottom:'1px solid rgba(0,240,255,0.06)' }}>
+                                        <span style={{ color:'#00F0FF' }}>✓</span> {f}
+                                    </li>
+                                ))}
                             </ul>
-                        </CardContent>
-                        <CardFooter>
-                            <Button
-                                className="w-full"
-                                size="lg"
+
+                            <button
+                                className={plan.popular ? 'dk-btn-primary' : 'dk-btn-outline'}
+                                style={{ width:'100%', justifyContent:'center', padding:'13px 24px' }}
                                 onClick={() => handlePurchase(plan)}
                                 disabled={!!loading}
-                                variant={plan.popular ? 'default' : 'outline'}
                             >
-                                {loading === plan.id ? (
-                                    <span className="flex items-center justify-center w-full h-full animate-shimmer bg-slate-200/50 text-slate-700 rounded-md">
-                                        Processing...
-                                    </span>
-                                ) : (
-                                    'Buy Now'
-                                )}
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                ))}
+                                {loading === plan.id ? <><Loader2 size={15} style={{ animation:'spin 1s linear infinite' }} /> Processing...</> : 'Buy Now'}
+                            </button>
+                        </div>
+                    ))}
+                </div>
+
+                <p style={{ textAlign:'center', color:'#6B7A99', fontSize:'0.8rem', marginTop:32 }}>
+                    Secured by Razorpay · Tokens never expire · Refund policy applies
+                </p>
             </div>
         </div>
     )

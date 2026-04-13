@@ -2,41 +2,52 @@ import { Mail, MessageSquareText, MapPin } from 'lucide-react'
 
 export default function ContactPage() {
     return (
-        <div className="container mx-auto py-16 px-4 max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="text-center mb-16 space-y-4">
-                <h1 className="text-4xl font-bold text-slate-900">Get in Touch</h1>
-                <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-                    Whether you have a question about our platform, pricing, or need technical support, our team is ready to answer all your questions.
-                </p>
-            </div>
+        <div className="page-wrapper" style={{
+            paddingTop: 80, position: 'relative', overflow: 'hidden',
+            backgroundImage: "url('/images/hero_bg_mesh.png')",
+            backgroundSize: 'cover', backgroundPosition: 'center',
+        }}>
+            <div style={{ position:'absolute', inset:0, background:'rgba(5,10,20,0.55)', zIndex:0 }} />
 
-            <div className="grid md:grid-cols-3 gap-8">
-                <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center space-y-4 hover:-translate-y-1 transition-transform duration-300">
-                    <div className="bg-blue-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <MessageSquareText className="h-8 w-8 text-blue-600" />
-                    </div>
-                    <h3 className="text-xl font-bold">Chat with Support</h3>
-                    <p className="text-slate-600 text-sm">We're here to help you navigate our platform and resolve issues.</p>
+            <div className="page-container" style={{ paddingBottom:80, position:'relative', zIndex:1 }}>
+                <div style={{ textAlign:'center', marginBottom:56 }}>
+                    <span className="dk-chip" style={{ marginBottom:14, display:'inline-block' }}>Get In Touch</span>
+                    <h1 style={{ fontFamily:'var(--font-head)', fontSize:'clamp(1.8rem,4vw,2.8rem)', color:'#E8EDF5', marginBottom:12 }}>
+                        We'd Love to Hear From You
+                    </h1>
+                    <p style={{ fontSize:'1rem', color:'#6B7A99', maxWidth:500, margin:'0 auto', lineHeight:1.7 }}>
+                        Questions about pricing, platform, or technical support — our team responds within 24 hours.
+                    </p>
                 </div>
 
-                <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center space-y-4 hover:-translate-y-1 transition-transform duration-300">
-                    <div className="bg-purple-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Mail className="h-8 w-8 text-purple-600" />
-                    </div>
-                    <h3 className="text-xl font-bold">Email Us</h3>
-                    <p className="text-slate-600 text-sm">Drop us a line and we'll get back to you within 24 hours.</p>
-                    <a href="mailto:support@referkaro.com" className="inline-block mt-4 text-purple-600 font-semibold hover:underline">
-                        support@referkaro.com
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))', gap:24, marginBottom:48 }}>
+                    {[
+                        { icon: <MessageSquareText size={24} color="#00F0FF" />, title:'Chat Support', desc:"We're here to help you navigate our platform and resolve any issues fast.", extra:null },
+                        { icon: <Mail size={24} color="#7B5EFF" />, title:'Email Us', desc:'Drop us a line and we\'ll get back within 24 hours.', extra:<a href="mailto:support@referkaro.com" style={{ color:'#00F0FF', fontWeight:600, fontSize:'0.875rem', marginTop:12, display:'block' }}>support@referkaro.com</a> },
+                        { icon: <MapPin size={24} color="#00F0FF" />, title:'Our Office', desc:'Come say hello at our headquarters in the heart of Bangalore.', extra:<p style={{ color:'#E8EDF5', fontWeight:600, fontSize:'0.875rem', marginTop:12 }}>Bangalore, India</p> },
+                    ].map(item => (
+                        <div key={item.title} className="dk-card" style={{ padding:32, textAlign:'center' }}>
+                            <div style={{ width:56,height:56,borderRadius:'50%',background:'rgba(0,240,255,0.07)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 20px' }}>
+                                {item.icon}
+                            </div>
+                            <h3 style={{ fontSize:'1rem', fontFamily:'var(--font-head)', color:'#E8EDF5', marginBottom:8 }}>{item.title}</h3>
+                            <p style={{ fontSize:'0.875rem', color:'#6B7A99', lineHeight:1.65 }}>{item.desc}</p>
+                            {item.extra}
+                        </div>
+                    ))}
+                </div>
+
+                {/* CTA */}
+                <div className="dk-card" style={{ padding:'40px 32px', textAlign:'center', background:'rgba(0,240,255,0.04)' }}>
+                    <h2 style={{ fontFamily:'var(--font-head)', fontSize:'1.4rem', color:'#E8EDF5', marginBottom:10 }}>
+                        Something Urgent?
+                    </h2>
+                    <p style={{ fontSize:'0.9rem', color:'#6B7A99', marginBottom:20 }}>
+                        For critical account issues, reach us directly.
+                    </p>
+                    <a href="mailto:support@referkaro.com" className="dk-btn-primary" style={{ display:'inline-flex' }}>
+                        Email Support Now →
                     </a>
-                </div>
-
-                <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center space-y-4 hover:-translate-y-1 transition-transform duration-300">
-                    <div className="bg-green-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <MapPin className="h-8 w-8 text-green-600" />
-                    </div>
-                    <h3 className="text-xl font-bold">Office Location</h3>
-                    <p className="text-slate-600 text-sm">Come say hello at our headquarters in Bangalore.</p>
-                    <p className="font-semibold text-sm mt-4">Bangalore, India</p>
                 </div>
             </div>
         </div>

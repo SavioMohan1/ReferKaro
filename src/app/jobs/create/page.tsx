@@ -20,6 +20,8 @@ export default function CreateJobPage() {
         description: '',
         requirements: '',
         job_url: '',
+        referral_type: 'single',
+        pool_size: 10,
     })
 
     // Check verification status on load
@@ -78,6 +80,8 @@ export default function CreateJobPage() {
             description: formData.description,
             requirements: formData.requirements || null,
             job_url: formData.job_url || null,
+            referral_type: formData.referral_type,
+            pool_size: formData.referral_type === 'pooling' ? formData.pool_size : null,
             referral_fee: 500,
         })
 
@@ -187,7 +191,7 @@ export default function CreateJobPage() {
                             <div>
                                 <label className="block text-sm font-medium mb-2">Experience Level *</label>
                                 <select
-                                    className="w-full rounded-md border p-2"
+                                    className="w-full rounded-md border p-2 text-sm"
                                     value={formData.experience_level}
                                     onChange={(e) => setFormData({ ...formData, experience_level: e.target.value })}
                                 >
@@ -197,6 +201,49 @@ export default function CreateJobPage() {
                                     <option value="lead">Lead/Principal</option>
                                 </select>
                             </div>
+                        </div>
+
+                        {/* Referral Type Selection */}
+                        <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-4">
+                            <label className="block text-lg font-bold">Referral Format</label>
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, referral_type: 'single' })}
+                                    className={`p-4 rounded-xl border-2 text-left transition-all ${formData.referral_type === 'single' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                                >
+                                    <h4 className="font-bold text-blue-900 border-b border-blue-100 pb-1 mb-2">💎 Single Referral</h4>
+                                    <p className="text-xs text-slate-600">Pure 1-on-1 interaction. You review seekers as they apply.</p>
+                                    <p className="text-[10px] mt-2 text-blue-600 font-bold uppercase tracking-wider">Premium Track (10 Tokens total)</p>
+                                </button>
+                                
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, referral_type: 'pooling' })}
+                                    className={`p-4 rounded-xl border-2 text-left transition-all ${formData.referral_type === 'pooling' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+                                >
+                                    <h4 className="font-bold text-blue-900 border-b border-blue-100 pb-1 mb-2">🌊 Pooling System</h4>
+                                    <p className="text-xs text-slate-600">Collect 10 applicants first. AI will rank them for you to pick the best.</p>
+                                    <p className="text-[10px] mt-2 text-blue-600 font-bold uppercase tracking-wider">Budget Track (1 Token total)</p>
+                                </button>
+                            </div>
+
+                            {formData.referral_type === 'pooling' && (
+                                <div className="mt-4 pt-4 border-t border-slate-200 animate-in fade-in slide-in-from-top-2">
+                                    <label className="block text-sm font-medium mb-2">Desired Pool Size (Applicants to collect)</label>
+                                    <div className="flex items-center gap-4">
+                                        <input
+                                            type="number"
+                                            min="2"
+                                            max="50"
+                                            className="w-24 rounded-md border p-2"
+                                            value={formData.pool_size}
+                                            onChange={(e) => setFormData({ ...formData, pool_size: parseInt(e.target.value) })}
+                                        />
+                                        <span className="text-sm text-slate-500 italic">Recommended: 10 per pool</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Description */}

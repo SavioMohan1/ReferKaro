@@ -3,23 +3,16 @@
 import { useState, useEffect, use } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { notFound } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { MapPin, Briefcase, IndianRupee, TrendingUp, ArrowLeft, Calendar, Check } from 'lucide-react'
+import { MapPin, Briefcase, TrendingUp, ArrowLeft, Calendar, Check, Coins, ExternalLink, ShieldCheck, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import ApplicationModal from '@/components/jobs/application-modal'
 
 const jobTypeLabels: Record<string, string> = {
-    full_time: 'Full Time',
-    part_time: 'Part Time',
-    contract: 'Contract',
-    internship: 'Internship',
+    full_time: 'Full Time', part_time: 'Part Time',
+    contract: 'Contract',  internship: 'Internship',
 }
-
 const experienceLevelLabels: Record<string, string> = {
-    entry: 'Entry Level',
-    mid: 'Mid Level',
-    senior: 'Senior',
-    lead: 'Lead',
+    entry: 'Entry Level', mid: 'Mid Level', senior: 'Senior', lead: 'Lead',
 }
 
 export default function JobDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -30,74 +23,50 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
     const [showModal, setShowModal] = useState(false)
     const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
-        fetchData()
-    }, [id])
+    useEffect(() => { fetchData() }, [id])
 
     const fetchData = async () => {
         const supabase = createClient()
-
-        // Fetch job details
         const { data: jobData, error: jobError } = await supabase
             .from('jobs')
-            .select(`
-        *,
-        profiles:employee_id (full_name, company)
-      `)
+            .select('*, profiles:employee_id(full_name, company)')
             .eq('id', id)
             .single()
 
-        if (jobError || !jobData) {
-            notFound()
-            return
-        }
-
+        if (jobError || !jobData) { notFound(); return }
         setJob(jobData)
 
-        // Check if user is authenticated
         const { data: { user } } = await supabase.auth.getUser()
-
         if (user) {
-            // Get user profile
             const { data: profile } = await supabase
-                .from('profiles')
-                .select('token_balance, role')
-                .eq('id', user.id)
-                .single()
-
+                .from('profiles').select('token_balance, role').eq('id', user.id).single()
             setUserProfile(profile)
 
-            // Check if already applied
             const { data: appData } = await supabase
-                .from('applications')
-                .select('id, status')
-                .eq('job_id', id)
-                .eq('job_seeker_id', user.id)
-                .single()
-
+                .from('applications').select('id, status')
+                .eq('job_id', id).eq('job_seeker_id', user.id).single()
             setApplication(appData)
         }
-
         setLoading(false)
     }
 
-    const handleApplySuccess = () => {
-        fetchData() // Refresh data to fetch the new application and update token balance
-    }
+    const handleApplySuccess = () => { fetchData() }
 
+    /* ── Loading skeleton ── */
     if (loading || !job) {
         return (
-            <div className="min-h-screen bg-slate-50 py-8">
-                <div className="container max-w-4xl mx-auto px-4">
-                    <div className="bg-white rounded-xl shadow-md overflow-hidden p-8 space-y-6">
-                        <div className="h-12 w-2/3 animate-shimmer rounded-md bg-slate-200"></div>
-                        <div className="h-6 w-1/3 animate-shimmer rounded-md bg-slate-200"></div>
-                        <div className="flex gap-4 mt-6">
-                            <div className="h-8 w-24 animate-shimmer rounded-full bg-slate-200"></div>
-                            <div className="h-8 w-24 animate-shimmer rounded-full bg-slate-200"></div>
-                            <div className="h-8 w-24 animate-shimmer rounded-full bg-slate-200"></div>
+            <div className="page-wrapper" style={{ paddingTop: 80, paddingBottom: 80 }}>
+                <div className="page-container" style={{ maxWidth: 860 }}>
+                    <div className="dk-card" style={{ padding: '40px 36px' }}>
+                        {[['70%','2rem'], ['35%','1rem'], ['50%','0.875rem']].map(([w, h], i) => (
+                            <div key={i} className="animate-shimmer" style={{ width: w, height: h, borderRadius: 8, marginBottom: 16 }} />
+                        ))}
+                        <div style={{ display:'flex', gap:10, marginTop: 8 }}>
+                            {['25%','20%','22%'].map((w, i) => (
+                                <div key={i} className="animate-shimmer" style={{ width: w, height: 28, borderRadius: 999 }} />
+                            ))}
                         </div>
-                        <div className="h-64 w-full animate-shimmer rounded-md bg-slate-200 mt-8"></div>
+                        <div className="animate-shimmer" style={{ height: 200, borderRadius: 12, marginTop: 32 }} />
                     </div>
                 </div>
             </div>
@@ -106,133 +75,214 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
 
     const canApply = userProfile && userProfile.role === 'job_seeker' && userProfile.token_balance > 0 && !application
 
+    /* ── Apply button variants ── */
+    const renderApplyBtn = () => {
+        if (application) {
+            if (application.status === 'payment_pending') {
+                return (
+                    <Link href="/my-applications" style={{ textDecoration:'none', display:'block' }}>
+                        <button className="dk-btn-outline" style={{ width:'100%', justifyContent:'center', padding:'14px 24px', fontSize:'0.95rem' }}>
+                            Awaiting Success Fee — Track Status →
+                        </button>
+                    </Link>
+                )
+            }
+            return (
+                <Link href="/my-applications" style={{ textDecoration:'none', display:'block' }}>
+                    <button style={{
+                        width:'100%', padding:'14px 24px', borderRadius:10, cursor:'pointer',
+                        background:'rgba(34,197,94,0.1)', color:'#22C55E', fontWeight:600,
+                        border:'1px solid rgba(34,197,94,0.3)', fontSize:'0.95rem',
+                        display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+                        fontFamily:'var(--font-body)', transition:'box-shadow 0.2s',
+                    }}>
+                        <Check size={17} /> Application Submitted — Track Status
+                    </button>
+                </Link>
+            )
+        }
+        if (!userProfile) {
+            return (
+                <Link href="/login" style={{ textDecoration:'none', display:'block' }}>
+                    <button className="dk-btn-primary" style={{ width:'100%', justifyContent:'center', padding:'14px 24px', fontSize:'0.95rem' }}>
+                        Login to Request Review →
+                    </button>
+                </Link>
+            )
+        }
+        if (userProfile.role !== 'job_seeker') {
+            return (
+                <button disabled className="dk-btn-outline" style={{ width:'100%', justifyContent:'center', opacity:0.45, cursor:'not-allowed', padding:'14px 24px' }}>
+                    Only Job Seekers Can Apply
+                </button>
+            )
+        }
+        if (userProfile.token_balance < 1) {
+            return (
+                <Link href="/buy-tokens" style={{ textDecoration:'none', display:'block' }}>
+                    <button style={{
+                        width:'100%', padding:'14px 24px', borderRadius:10, cursor:'pointer',
+                        background:'rgba(251,146,60,0.1)', color:'#FB923C', fontWeight:600,
+                        border:'1px solid rgba(251,146,60,0.3)', fontSize:'0.95rem',
+                        display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+                        fontFamily:'var(--font-body)',
+                    }}>
+                        <Coins size={16} /> Buy Tokens to Apply
+                    </button>
+                </Link>
+            )
+        }
+        return (
+            <button
+                onClick={() => setShowModal(true)}
+                className="dk-btn-primary"
+                style={{ width:'100%', justifyContent:'center', padding:'14px 24px', fontSize:'0.95rem' }}
+            >
+                Request Review &amp; Referral (1 Token) →
+            </button>
+        )
+    }
+
     return (
-        <div className="min-h-screen bg-slate-50 py-8">
-            <div className="container max-w-4xl mx-auto px-4">
-                <Link href="/jobs" className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-6">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Jobs
+        <div className="page-wrapper" style={{ paddingTop:80, paddingBottom:80, position:'relative', overflow:'hidden' }}>
+            <div className="glow-orb glow-cyan"   style={{ width:350, height:350, top:-60, right:-60, opacity:0.3 }} />
+            <div className="glow-orb glow-violet"  style={{ width:300, height:300, bottom:0, left:-60, opacity:0.25 }} />
+
+            <div className="page-container" style={{ maxWidth:860, position:'relative', zIndex:1 }}>
+                {/* Back link */}
+                <Link href="/jobs" className="dk-btn-ghost" style={{ marginBottom:28, display:'inline-flex' }}>
+                    <ArrowLeft size={14} /> Back to Jobs
                 </Link>
 
-                <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                    {/* Header */}
-                    <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-8">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <h1 className="text-3xl font-bold mb-2">{job.role_title}</h1>
-                                <p className="text-xl text-blue-100">{job.company}</p>
-                            </div>
-                        </div>
+                {/* Hero card */}
+                <div className="dk-card" style={{ overflow:'hidden', marginBottom:24 }}>
+                    {/* Dark gradient header — replaces the blue */}
+                    <div style={{
+                        padding:'36px 36px 32px',
+                        background:'linear-gradient(135deg, rgba(0,240,255,0.07) 0%, rgba(123,94,255,0.07) 100%)',
+                        borderBottom:'1px solid rgba(0,240,255,0.1)',
+                    }}>
+                        <h1 style={{
+                            fontFamily:"'Syne', sans-serif",
+                            fontSize:'clamp(1.5rem,3vw,2.2rem)',
+                            fontWeight:700, color:'#E8EDF5', marginBottom:6,
+                        }}>{job.role_title}</h1>
+                        <p style={{ fontSize:'1.1rem', color:'#00F0FF', fontWeight:600, marginBottom:20 }}>{job.company}</p>
 
-                        <div className="flex flex-wrap gap-4 mt-6 text-sm">
-                            <div className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4" />
-                                {job.location}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Briefcase className="h-4 w-4" />
-                                {jobTypeLabels[job.job_type]}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <TrendingUp className="h-4 w-4" />
-                                {experienceLevelLabels[job.experience_level]}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Calendar className="h-4 w-4" />
-                                Posted {new Date(job.created_at).toLocaleDateString()}
-                            </div>
+                        <div style={{ display:'flex', flexWrap:'wrap', gap:10 }}>
+                            {[
+                                { icon:<MapPin size={13} />,     label: job.location },
+                                { icon:<Briefcase size={13} />,  label: jobTypeLabels[job.job_type] },
+                                { icon:<TrendingUp size={13} />, label: experienceLevelLabels[job.experience_level] },
+                                { icon:<Calendar size={13} />,   label: `Posted ${new Date(job.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })}` },
+                            ].map(tag => (
+                                <span key={tag.label} style={{
+                                    display:'inline-flex', alignItems:'center', gap:6,
+                                    fontSize:'0.8rem', color:'#6B7A99',
+                                    background:'rgba(255,255,255,0.05)',
+                                    border:'1px solid rgba(255,255,255,0.08)',
+                                    padding:'5px 12px', borderRadius:999,
+                                }}>
+                                    <span style={{ color:'#00F0FF' }}>{tag.icon}</span>
+                                    {tag.label}
+                                </span>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Content */}
-                    <div className="p-8 space-y-8">
-                        {/* Job URL */}
+                    {/* Body */}
+                    <div style={{ padding:'36px', display:'flex', flexDirection:'column', gap:32 }}>
+
+                        {/* Official job URL */}
                         {job.job_url && (
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                <p className="text-sm font-semibold text-blue-900 mb-2">
-                                    Official Job Posting:
-                                </p>
-                                <a
-                                    href={job.job_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:underline break-all text-sm"
-                                >
-                                    {job.job_url}
-                                </a>
+                            <div style={{
+                                background:'rgba(0,240,255,0.04)',
+                                border:'1px solid rgba(0,240,255,0.14)',
+                                borderRadius:10, padding:'14px 18px',
+                                display:'flex', alignItems:'flex-start', gap:12,
+                            }}>
+                                <ExternalLink size={16} color="#00F0FF" style={{ marginTop:2, flexShrink:0 }} />
+                                <div>
+                                    <p style={{ fontSize:'0.78rem', fontWeight:600, color:'#00F0FF', marginBottom:4, textTransform:'uppercase', letterSpacing:'0.06em' }}>
+                                        Official Job Posting
+                                    </p>
+                                    <a href={job.job_url} target="_blank" rel="noopener noreferrer"
+                                        style={{ color:'#6B7A99', fontSize:'0.85rem', wordBreak:'break-all', transition:'color 0.2s' }}
+                                        onMouseEnter={e => (e.currentTarget.style.color = '#00F0FF')}
+                                        onMouseLeave={e => (e.currentTarget.style.color = '#6B7A99')}
+                                    >{job.job_url}</a>
+                                </div>
                             </div>
                         )}
 
                         {/* Description */}
                         <div>
-                            <h2 className="text-xl font-bold mb-3">About the Role</h2>
-                            <p className="text-gray-700 whitespace-pre-line">{job.description}</p>
+                            <h2 style={{ fontFamily:"'Syne', sans-serif", fontSize:'1.05rem', color:'#E8EDF5', marginBottom:14 }}>
+                                About the Role
+                            </h2>
+                            <p style={{ fontSize:'0.9rem', color:'#6B7A99', lineHeight:1.85, whiteSpace:'pre-line' }}>
+                                {job.description}
+                            </p>
                         </div>
 
                         {/* Requirements */}
                         {job.requirements && (
                             <div>
-                                <h2 className="text-xl font-bold mb-3">Requirements</h2>
-                                <p className="text-gray-700 whitespace-pre-line">{job.requirements}</p>
+                                <h2 style={{ fontFamily:"'Syne', sans-serif", fontSize:'1.05rem', color:'#E8EDF5', marginBottom:14 }}>
+                                    Requirements
+                                </h2>
+                                <p style={{ fontSize:'0.9rem', color:'#6B7A99', lineHeight:1.85, whiteSpace:'pre-line' }}>
+                                    {job.requirements}
+                                </p>
                             </div>
                         )}
 
-                        {/* Referrer Info */}
-                        <div className="bg-slate-50 rounded-lg p-6">
-                            <h3 className="font-semibold mb-2">Referred by</h3>
-                            <p className="text-gray-700 font-medium flex items-center gap-2">
-                                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">✓ Verified</span>
-                                Employee
-                            </p>
-                            {job.profiles?.company && (
-                                <p className="text-sm text-gray-500 mt-1">Works at {job.profiles.company}</p>
-                            )}
+                        {/* Verified referrer */}
+                        <div style={{
+                            background:'rgba(34,197,94,0.05)',
+                            border:'1px solid rgba(34,197,94,0.15)',
+                            borderRadius:12, padding:'18px 20px',
+                            display:'flex', alignItems:'center', gap:14,
+                        }}>
+                            <ShieldCheck size={22} color="#22C55E" flexShrink={0} />
+                            <div>
+                                <p style={{ fontSize:'0.85rem', fontWeight:600, color:'#22C55E', marginBottom:2 }}>
+                                    Verified Employee Referral
+                                </p>
+                                {job.profiles?.company && (
+                                    <p style={{ fontSize:'0.8rem', color:'#6B7A99' }}>
+                                        Works at <strong style={{ color:'#E8EDF5' }}>{job.profiles.company}</strong>
+                                    </p>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Apply Button */}
-                        <div className="pt-4">
-                            {application ? (
-                                application.status === 'payment_pending' ? (
-                                    <Link href="/my-applications" className="w-full">
-                                        <Button className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700 shadow-md flex items-center justify-center gap-2">
-                                            Awaiting Success Fee Payment &mdash; Go to Dashboard
-                                        </Button>
-                                    </Link>
-                                ) : (
-                                    <Link href="/my-applications" className="w-full">
-                                        <Button className="w-full h-12 text-lg bg-emerald-600 hover:bg-emerald-700 shadow-md flex items-center justify-center gap-2">
-                                            <Check className="h-5 w-5" /> Application Submitted &mdash; Track Status
-                                        </Button>
-                                    </Link>
-                                )
-                            ) : !userProfile ? (
-                                <Link href="/login">
-                                    <Button className="w-full h-12 text-lg">
-                                        Login to Request Review
-                                    </Button>
-                                </Link>
-                            ) : userProfile.role !== 'job_seeker' ? (
-                                <Button disabled className="w-full h-12 text-lg">
-                                    Only Job Seekers Can Request Reviews
-                                </Button>
-                            ) : userProfile.token_balance < 1 ? (
-                                <Button className="w-full h-12 text-lg bg-orange-600 hover:bg-orange-700">
-                                    Buy Tokens to Apply
-                                </Button>
-                            ) : (
-                                <Button
-                                    onClick={() => setShowModal(true)}
-                                    className="w-full h-12 text-lg"
-                                >
-                                    Request Review & Referral (1 Token)
-                                </Button>
-                            )}
+                        {/* Token balance info */}
+                        {userProfile?.role === 'job_seeker' && (
+                            <div style={{
+                                display:'flex', alignItems:'center', gap:10,
+                                padding:'12px 16px', borderRadius:10,
+                                background:'rgba(255,255,255,0.03)',
+                                border:'1px solid rgba(255,255,255,0.07)',
+                            }}>
+                                <Coins size={16} color="#00F0FF" />
+                                <span style={{ fontSize:'0.85rem', color:'#6B7A99' }}>
+                                    Your balance: <strong style={{ color:'#E8EDF5' }}>{userProfile.token_balance} token{userProfile.token_balance !== 1 ? 's' : ''}</strong>
+                                    {userProfile.token_balance < 1 && (
+                                        <> — <Link href="/buy-tokens" style={{ color:'#00F0FF' }}>Buy more</Link></>
+                                    )}
+                                </span>
+                            </div>
+                        )}
+
+                        {/* Apply CTA */}
+                        <div style={{ paddingTop:8 }}>
+                            {renderApplyBtn()}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Application Modal */}
             {showModal && (
                 <ApplicationModal
                     jobId={job.id}
