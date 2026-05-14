@@ -3,13 +3,12 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export default function CreateJobPage() {
     const router = useRouter()
-    const [loading, setLoading] = useState(true) // Start loading initially
+    const [loading, setLoading] = useState(true)
     const [formData, setFormData] = useState({
         company: '',
         role_title: '',
@@ -24,7 +23,6 @@ export default function CreateJobPage() {
         pool_size: 10,
     })
 
-    // Check verification status on load
     useEffect(() => {
         const checkVerification = async () => {
             const supabase = createClient()
@@ -46,7 +44,6 @@ export default function CreateJobPage() {
                 return
             }
 
-            // Auto-fill company if available
             if (profile.company) {
                 setFormData(prev => ({ ...prev, company: profile.company }))
             }
@@ -55,7 +52,7 @@ export default function CreateJobPage() {
         }
 
         checkVerification()
-    }, [])
+    }, [router])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -97,91 +94,69 @@ export default function CreateJobPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-50 py-12 px-4 flex justify-center">
-                <div className="max-w-2xl w-full bg-white rounded-xl shadow-md p-8 space-y-6">
-                    <div className="h-8 w-1/3 animate-shimmer rounded-md bg-slate-200"></div>
-                    <div className="h-12 w-full animate-shimmer rounded-md bg-slate-200 mt-8"></div>
-                    <div className="h-12 w-full animate-shimmer rounded-md bg-slate-200"></div>
-                    <div className="h-32 w-full animate-shimmer rounded-md bg-slate-200"></div>
-                    <div className="h-12 w-full animate-shimmer rounded-md bg-slate-200 mt-6"></div>
+            <div className="page-wrapper" style={{ paddingTop: 80, paddingBottom: 80 }}>
+                <div className="page-container" style={{ maxWidth: 720 }}>
+                    <div className="dk-card" style={{ padding: '40px 36px' }}>
+                        <div className="animate-shimmer" style={{ height: 32, width: '33%', borderRadius: 8, background: 'rgba(0,240,255,0.06)' }} />
+                        <div className="animate-shimmer" style={{ height: 48, width: '100%', borderRadius: 8, background: 'rgba(0,240,255,0.06)', marginTop: 32 }} />
+                        <div className="animate-shimmer" style={{ height: 48, width: '100%', borderRadius: 8, background: 'rgba(0,240,255,0.06)', marginTop: 16 }} />
+                        <div className="animate-shimmer" style={{ height: 128, width: '100%', borderRadius: 8, background: 'rgba(0,240,255,0.06)', marginTop: 16 }} />
+                    </div>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 py-8">
-            <div className="container max-w-3xl mx-auto px-4">
-                <Link href="/dashboard" className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-6">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Dashboard
+        <div className="page-wrapper" style={{ paddingTop: 80, paddingBottom: 80, position: 'relative', overflow: 'hidden' }}>
+            <div className="glow-orb glow-violet" style={{ width: 350, height: 350, top: -60, right: -60, opacity: 0.3 }} />
+            <div className="glow-orb glow-cyan" style={{ width: 300, height: 300, bottom: -60, left: -60, opacity: 0.25 }} />
+
+            <div className="page-container" style={{ maxWidth: 720, position: 'relative', zIndex: 1 }}>
+                <Link href="/dashboard" className="dk-btn-ghost" style={{ marginBottom: 28, display: 'inline-flex' }}>
+                    <ArrowLeft size={15} /> Back to Dashboard
                 </Link>
 
-                <div className="bg-white rounded-xl shadow-md p-8">
-                    <h1 className="text-3xl font-bold mb-2">Create Job Listing</h1>
-                    <p className="text-gray-600 mb-8">Post a new job opening and start receiving applications</p>
+                <div className="dk-card" style={{ padding: '40px 36px' }}>
+                    <span className="dk-chip" style={{ marginBottom: 16, display: 'inline-block' }}>New Listing</span>
+                    <h1 style={{ fontFamily: 'var(--font-head)', fontSize: '1.8rem', color: '#E8EDF5', marginBottom: 6 }}>Create Job Listing</h1>
+                    <p style={{ color: '#6B7A99', fontSize: '0.9rem', marginBottom: 32 }}>Post a new job opening and start receiving applications</p>
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                         {/* Company & Role */}
-                        <div className="grid md:grid-cols-2 gap-6">
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 20 }}>
                             <div>
-                                <label className="block text-sm font-medium mb-2">Company *</label>
-                                <input
-                                    type="text"
-                                    required
-                                    className="w-full rounded-md border p-2"
-                                    value={formData.company}
-                                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                                    placeholder="e.g., Google"
-                                />
+                                <label style={{ display: 'block', marginBottom: 8, fontSize: '0.85rem', fontWeight: 500, color: '#B0BAD4' }}>Company *</label>
+                                <input type="text" required className="dk-input" value={formData.company}
+                                    onChange={(e) => setFormData({ ...formData, company: e.target.value })} placeholder="e.g., Google" />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-2">Role Title *</label>
-                                <input
-                                    type="text"
-                                    required
-                                    className="w-full rounded-md border p-2"
-                                    value={formData.role_title}
-                                    onChange={(e) => setFormData({ ...formData, role_title: e.target.value })}
-                                    placeholder="e.g., Software Engineer"
-                                />
+                                <label style={{ display: 'block', marginBottom: 8, fontSize: '0.85rem', fontWeight: 500, color: '#B0BAD4' }}>Role Title *</label>
+                                <input type="text" required className="dk-input" value={formData.role_title}
+                                    onChange={(e) => setFormData({ ...formData, role_title: e.target.value })} placeholder="e.g., Software Engineer" />
                             </div>
                         </div>
 
                         {/* Department & Location */}
-                        <div className="grid md:grid-cols-2 gap-6">
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 20 }}>
                             <div>
-                                <label className="block text-sm font-medium mb-2">Department</label>
-                                <input
-                                    type="text"
-                                    className="w-full rounded-md border p-2"
-                                    value={formData.department}
-                                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                                    placeholder="e.g., Engineering"
-                                />
+                                <label style={{ display: 'block', marginBottom: 8, fontSize: '0.85rem', fontWeight: 500, color: '#B0BAD4' }}>Department</label>
+                                <input type="text" className="dk-input" value={formData.department}
+                                    onChange={(e) => setFormData({ ...formData, department: e.target.value })} placeholder="e.g., Engineering" />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-2">Location *</label>
-                                <input
-                                    type="text"
-                                    required
-                                    className="w-full rounded-md border p-2"
-                                    value={formData.location}
-                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                    placeholder="e.g., Bangalore, Remote"
-                                />
+                                <label style={{ display: 'block', marginBottom: 8, fontSize: '0.85rem', fontWeight: 500, color: '#B0BAD4' }}>Location *</label>
+                                <input type="text" required className="dk-input" value={formData.location}
+                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder="e.g., Bangalore, Remote" />
                             </div>
                         </div>
 
                         {/* Job Type & Experience */}
-                        <div className="grid md:grid-cols-2 gap-6">
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 20 }}>
                             <div>
-                                <label className="block text-sm font-medium mb-2">Job Type *</label>
-                                <select
-                                    className="w-full rounded-md border p-2"
-                                    value={formData.job_type}
-                                    onChange={(e) => setFormData({ ...formData, job_type: e.target.value })}
-                                >
+                                <label style={{ display: 'block', marginBottom: 8, fontSize: '0.85rem', fontWeight: 500, color: '#B0BAD4' }}>Job Type *</label>
+                                <select className="dk-input" value={formData.job_type}
+                                    onChange={(e) => setFormData({ ...formData, job_type: e.target.value })}>
                                     <option value="full_time">Full Time</option>
                                     <option value="part_time">Part Time</option>
                                     <option value="contract">Contract</option>
@@ -189,12 +164,9 @@ export default function CreateJobPage() {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium mb-2">Experience Level *</label>
-                                <select
-                                    className="w-full rounded-md border p-2 text-sm"
-                                    value={formData.experience_level}
-                                    onChange={(e) => setFormData({ ...formData, experience_level: e.target.value })}
-                                >
+                                <label style={{ display: 'block', marginBottom: 8, fontSize: '0.85rem', fontWeight: 500, color: '#B0BAD4' }}>Experience Level *</label>
+                                <select className="dk-input" value={formData.experience_level}
+                                    onChange={(e) => setFormData({ ...formData, experience_level: e.target.value })}>
                                     <option value="entry">Entry Level</option>
                                     <option value="mid">Mid Level</option>
                                     <option value="senior">Senior</option>
@@ -204,43 +176,41 @@ export default function CreateJobPage() {
                         </div>
 
                         {/* Referral Type Selection */}
-                        <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-4">
-                            <label className="block text-lg font-bold">Referral Format</label>
-                            <div className="grid md:grid-cols-2 gap-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, referral_type: 'single' })}
-                                    className={`p-4 rounded-xl border-2 text-left transition-all ${formData.referral_type === 'single' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}
-                                >
-                                    <h4 className="font-bold text-blue-900 border-b border-blue-100 pb-1 mb-2">💎 Single Referral</h4>
-                                    <p className="text-xs text-slate-600">Pure 1-on-1 interaction. You review seekers as they apply.</p>
-                                    <p className="text-[10px] mt-2 text-blue-600 font-bold uppercase tracking-wider">Premium Track (10 Tokens total)</p>
+                        <div style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(0,240,255,0.1)', borderRadius: 14, padding: '24px 24px 20px' }}>
+                            <label style={{ display: 'block', fontFamily: 'var(--font-head)', fontSize: '1rem', color: '#E8EDF5', marginBottom: 16 }}>Referral Format</label>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 16 }}>
+                                <button type="button" onClick={() => setFormData({ ...formData, referral_type: 'single' })}
+                                    style={{
+                                        padding: 20, borderRadius: 12, textAlign: 'left', cursor: 'pointer',
+                                        background: formData.referral_type === 'single' ? 'rgba(123,94,255,0.08)' : 'rgba(255,255,255,0.02)',
+                                        border: `2px solid ${formData.referral_type === 'single' ? '#7B5EFF' : 'rgba(0,240,255,0.1)'}`,
+                                        transition: 'all 0.2s',
+                                    }}>
+                                    <h4 style={{ fontFamily: 'var(--font-head)', fontSize: '0.9rem', color: '#E8EDF5', marginBottom: 6 }}>💎 Single Referral</h4>
+                                    <p style={{ fontSize: '0.8rem', color: '#6B7A99', lineHeight: 1.5, marginBottom: 8 }}>Pure 1-on-1 interaction. You review seekers as they apply.</p>
+                                    <p style={{ fontSize: '0.7rem', color: '#7B5EFF', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Premium Track (10 Tokens total)</p>
                                 </button>
-                                
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, referral_type: 'pooling' })}
-                                    className={`p-4 rounded-xl border-2 text-left transition-all ${formData.referral_type === 'pooling' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}
-                                >
-                                    <h4 className="font-bold text-blue-900 border-b border-blue-100 pb-1 mb-2">🌊 Pooling System</h4>
-                                    <p className="text-xs text-slate-600">Collect 10 applicants first. AI will rank them for you to pick the best.</p>
-                                    <p className="text-[10px] mt-2 text-blue-600 font-bold uppercase tracking-wider">Budget Track (1 Token total)</p>
+                                <button type="button" onClick={() => setFormData({ ...formData, referral_type: 'pooling' })}
+                                    style={{
+                                        padding: 20, borderRadius: 12, textAlign: 'left', cursor: 'pointer',
+                                        background: formData.referral_type === 'pooling' ? 'rgba(0,240,255,0.06)' : 'rgba(255,255,255,0.02)',
+                                        border: `2px solid ${formData.referral_type === 'pooling' ? '#00F0FF' : 'rgba(0,240,255,0.1)'}`,
+                                        transition: 'all 0.2s',
+                                    }}>
+                                    <h4 style={{ fontFamily: 'var(--font-head)', fontSize: '0.9rem', color: '#E8EDF5', marginBottom: 6 }}>🌊 Pooling System</h4>
+                                    <p style={{ fontSize: '0.8rem', color: '#6B7A99', lineHeight: 1.5, marginBottom: 8 }}>Collect 10 applicants first. AI will rank them for you to pick the best.</p>
+                                    <p style={{ fontSize: '0.7rem', color: '#00F0FF', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Budget Track (1 Token total)</p>
                                 </button>
                             </div>
 
                             {formData.referral_type === 'pooling' && (
-                                <div className="mt-4 pt-4 border-t border-slate-200 animate-in fade-in slide-in-from-top-2">
-                                    <label className="block text-sm font-medium mb-2">Desired Pool Size (Applicants to collect)</label>
-                                    <div className="flex items-center gap-4">
-                                        <input
-                                            type="number"
-                                            min="2"
-                                            max="50"
-                                            className="w-24 rounded-md border p-2"
+                                <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(0,240,255,0.08)' }}>
+                                    <label style={{ display: 'block', marginBottom: 8, fontSize: '0.85rem', fontWeight: 500, color: '#B0BAD4' }}>Desired Pool Size</label>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                        <input type="number" min="2" max="50" className="dk-input" style={{ width: 80 }}
                                             value={formData.pool_size}
-                                            onChange={(e) => setFormData({ ...formData, pool_size: parseInt(e.target.value) })}
-                                        />
-                                        <span className="text-sm text-slate-500 italic">Recommended: 10 per pool</span>
+                                            onChange={(e) => setFormData({ ...formData, pool_size: parseInt(e.target.value) })} />
+                                        <span style={{ fontSize: '0.8rem', color: '#6B7A99', fontStyle: 'italic' }}>Recommended: 10 per pool</span>
                                     </div>
                                 </div>
                             )}
@@ -248,50 +218,39 @@ export default function CreateJobPage() {
 
                         {/* Description */}
                         <div>
-                            <label className="block text-sm font-medium mb-2">Job Description *</label>
-                            <textarea
-                                required
-                                rows={6}
-                                className="w-full rounded-md border p-2"
+                            <label style={{ display: 'block', marginBottom: 8, fontSize: '0.85rem', fontWeight: 500, color: '#B0BAD4' }}>Job Description *</label>
+                            <textarea required rows={6} className="dk-input" style={{ resize: 'vertical' }}
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                placeholder="Describe the role, responsibilities, and what makes this opportunity great..."
-                            />
+                                placeholder="Describe the role, responsibilities, and what makes this opportunity great..." />
                         </div>
 
                         {/* Requirements */}
                         <div>
-                            <label className="block text-sm font-medium mb-2">Requirements</label>
-                            <textarea
-                                rows={4}
-                                className="w-full rounded-md border p-2"
+                            <label style={{ display: 'block', marginBottom: 8, fontSize: '0.85rem', fontWeight: 500, color: '#B0BAD4' }}>Requirements</label>
+                            <textarea rows={4} className="dk-input" style={{ resize: 'vertical' }}
                                 value={formData.requirements}
                                 onChange={(e) => setFormData({ ...formData, requirements: e.target.value })}
-                                placeholder="List key skills, qualifications, and experience needed..."
-                            />
+                                placeholder="List key skills, qualifications, and experience needed..." />
                         </div>
 
                         {/* Job URL */}
                         <div>
-                            <label className="block text-sm font-medium mb-2">Official Job Posting URL</label>
-                            <input
-                                type="url"
-                                className="w-full rounded-md border p-2"
-                                value={formData.job_url}
+                            <label style={{ display: 'block', marginBottom: 8, fontSize: '0.85rem', fontWeight: 500, color: '#B0BAD4' }}>Official Job Posting URL</label>
+                            <input type="url" className="dk-input" value={formData.job_url}
                                 onChange={(e) => setFormData({ ...formData, job_url: e.target.value })}
-                                placeholder="https://company.com/careers/job-id"
-                            />
-                            <p className="text-sm text-gray-500 mt-1">Link to the official job posting to verify authenticity</p>
+                                placeholder="https://company.com/careers/job-id" />
+                            <p style={{ fontSize: '0.8rem', color: '#6B7A99', marginTop: 6 }}>Link to the official job posting to verify authenticity</p>
                         </div>
 
                         {/* Submit */}
-                        <div className="flex gap-4 pt-4">
-                            <Button type="submit" disabled={loading} className="flex-1">
+                        <div style={{ display: 'flex', gap: 12, paddingTop: 8 }}>
+                            <button type="submit" disabled={loading} className="dk-btn-primary" style={{ flex: 1, justifyContent: 'center', padding: '13px 24px' }}>
                                 {loading ? 'Creating...' : 'Create Job Listing'}
-                            </Button>
-                            <Button type="button" variant="outline" onClick={() => router.back()}>
+                            </button>
+                            <button type="button" onClick={() => router.back()} className="dk-btn-outline" style={{ padding: '13px 24px' }}>
                                 Cancel
-                            </Button>
+                            </button>
                         </div>
                     </form>
                 </div>

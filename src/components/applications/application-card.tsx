@@ -14,6 +14,7 @@ const statusMap: Record<string, { label: string; cls: string }> = {
     accepted:        { label: 'Accepted',        cls: 'status-accepted' },
     rejected:        { label: 'Rejected',        cls: 'status-rejected' },
     expired:         { label: 'Expired',         cls: 'status-expired' },
+    referred:        { label: 'Referred',        cls: 'status-referred' },
 }
 
 export default function ApplicationCard({ application }: ApplicationCardProps) {

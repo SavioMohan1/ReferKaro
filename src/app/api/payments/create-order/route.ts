@@ -30,7 +30,7 @@ export async function POST(request: Request) {
         }
 
         const body = await request.json()
-        const { planId, amount, tokens, type = 'token', applicationId = null } = body
+        const { amount, tokens, type = 'token', applicationId = null } = body
 
         let finalAmount = amount
         let finalTokens = tokens

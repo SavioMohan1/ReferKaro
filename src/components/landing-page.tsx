@@ -1,9 +1,8 @@
 'use client'
 
 import Link from "next/link"
-import { useEffect, useRef } from "react"
+import { useEffect } from "react"
 import Footer from "@/components/layout/footer"
-import { ArrowRight, ShieldCheck } from "lucide-react"
 
 export default function LandingPage() {
 
@@ -654,9 +653,9 @@ export default function LandingPage() {
                 {/* ── NAVBAR ── */}
                 <nav id="landing-nav">
                     <div className="nav-inner">
-                        <a href="/" className="nav-logo">
+                        <Link href="/" className="nav-logo">
                             <span className="accent">Refer</span><span className="white">Karo</span>
-                        </a>
+                        </Link>
                         <ul className="nav-links">
                             <li><a href="#features">Features</a></li>
                             <li><a href="#how">How It Works</a></li>

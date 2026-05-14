@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
-import crypto from 'crypto'
 
 // Admin client bypasses RLS — used only for privileged writes after auth verification
 const supabaseAdmin = createAdminClient(
@@ -78,7 +77,6 @@ export async function POST(request: Request) {
         }
 
         // 6. Generate Proxy Email using universal env address
-        const randomString = crypto.randomBytes(4).toString('hex')
         const proxyAddress = process.env.PROXY_EMAIL || 'saviomohan2002@gmail.com'
 
         const { error: proxyError } = await supabaseAdmin.from('proxy_emails').insert({

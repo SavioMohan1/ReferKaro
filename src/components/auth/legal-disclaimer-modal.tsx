@@ -3,9 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Checkbox } from '@/components/ui/checkbox'
-import { ShieldCheck, AlertTriangle } from 'lucide-react'
+import { ShieldCheck } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export default function LegalDisclaimerModal() {
@@ -97,7 +96,7 @@ export default function LegalDisclaimerModal() {
                             You agree that:
                         </p>
                         <ul className="list-disc pl-5 space-y-2 bg-yellow-50 p-4 rounded-lg border border-yellow-100">
-                            <li><strong>Crucial:</strong> Users are solely responsible for ensuring that their use of ReferKaro complies with their employer's Code of Conduct and employment contracts.</li>
+                            <li><strong>Crucial:</strong> Users are solely responsible for ensuring that their use of ReferKaro complies with their employer&apos;s Code of Conduct and employment contracts.</li>
                             <li>ReferKaro is <strong>not liable</strong> for any disciplinary action, policy violation, or conflict of interest arising from your use of this platform.</li>
                             <li>You verify that you have the authority to refer candidates for the roles you post.</li>
                         </ul>

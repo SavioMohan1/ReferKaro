@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { Loader2, CheckCircle2, Zap, Star } from 'lucide-react'
 import Script from 'next/script'
 import { useRouter } from 'next/navigation'

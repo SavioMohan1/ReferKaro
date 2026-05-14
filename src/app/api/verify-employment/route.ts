@@ -106,7 +106,7 @@ Return ONLY a JSON object:
         let analysis;
         try {
             analysis = JSON.parse(cleanedJson)
-        } catch (e) {
+        } catch {
             console.error("JSON Parse Error:", cleanedJson)
             return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 })
         }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { IndianRupee, ArrowRight, UserPlus, Clock, BarChart2, CheckCircle, User } from 'lucide-react'
+import { IndianRupee, ArrowRight, UserPlus, Clock, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { APPLICATION_STATUS_MAP } from '@/lib/constants'
 

@@ -1,4 +1,4 @@
-import { ShieldCheck, Target, Users, Zap } from 'lucide-react'
+import { Target, Users, Zap } from 'lucide-react'
 
 export default function AboutPage() {
     return (

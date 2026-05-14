@@ -12,7 +12,7 @@ interface JobSeekerDashboardProps {
 }
 
 
-export default function JobSeekerDashboard({ profile, user, recentActivity }: JobSeekerDashboardProps) {
+export default function JobSeekerDashboard({ profile, user: _user, recentActivity }: JobSeekerDashboardProps) {
     const balance = profile.token_balance || 0
 
     return (

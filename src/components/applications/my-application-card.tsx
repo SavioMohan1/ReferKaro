@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Briefcase, Calendar, Building, ExternalLink, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
+import { Calendar, Building, ExternalLink, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import Script from 'next/script'
 import { useRouter } from 'next/navigation'

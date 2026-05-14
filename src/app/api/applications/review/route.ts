@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
-import crypto from 'crypto'
 
 // Admin client for all privileged writes — bypasses RLS after auth verification
 const supabaseAdmin = createAdminClient(
@@ -68,7 +67,6 @@ export async function POST(request: Request) {
 
         const referral_type = application.referral_type || application.job?.referral_type || 'single'
 
-        let dbStatus = status
         let proxyEmail = null
 
         // =====================================================
@@ -79,8 +77,6 @@ export async function POST(request: Request) {
             if (referral_type === 'pooling') {
                 // --- POOLING ACCEPTANCE ---
                 // No payment required. Winner is selected, all others rejected immediately.
-                dbStatus = 'accepted'
-
                 // Reject all OTHER applications in the same pool (same job)
                 const { error: rejectError } = await supabaseAdmin
                     .from('applications')

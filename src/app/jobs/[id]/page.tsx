@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { notFound } from 'next/navigation'
-import { MapPin, Briefcase, TrendingUp, ArrowLeft, Calendar, Check, Coins, ExternalLink, ShieldCheck, Loader2 } from 'lucide-react'
+import { MapPin, Briefcase, TrendingUp, ArrowLeft, Calendar, Check, Coins, ExternalLink, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import ApplicationModal from '@/components/jobs/application-modal'
 
@@ -73,7 +73,6 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
         )
     }
 
-    const canApply = userProfile && userProfile.role === 'job_seeker' && userProfile.token_balance > 0 && !application
 
     /* ── Apply button variants ── */
     const renderApplyBtn = () => {

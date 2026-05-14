@@ -54,7 +54,6 @@ export async function POST(request: Request) {
         const buffer = Buffer.from(arrayBuffer)
 
         // Parse PDF text content
-        // @ts-ignore - pdf-parse CommonJS interop
         const pdfParse = require('pdf-parse')
         const pdfResult = await pdfParse(buffer)
         const resumeText: string = pdfResult.text

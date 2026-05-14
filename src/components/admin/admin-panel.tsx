@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { CheckCircle, XCircle, ExternalLink, Clock, RefreshCw, ShieldCheck } from 'lucide-react'
+import { CheckCircle, XCircle, ExternalLink, RefreshCw, ShieldCheck } from 'lucide-react'
 
 interface Job {
     id: string
