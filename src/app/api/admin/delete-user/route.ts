@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
-const ADMIN_EMAIL = "saviomohan2002@gmail.com"
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || ""
 
 export async function DELETE(request: Request) {
     try {

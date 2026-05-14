@@ -4,9 +4,23 @@ import { createClient } from '@/lib/supabase/server'
 // This would strictly be a POST request from SendGrid/Resend/AWS SES
 export async function POST(request: Request) {
     try {
+        // 1. Verify webhook authenticity FIRST (before parsing body)
+        const authHeader = request.headers.get('authorization')
+        const webhookSecret = process.env.WEBHOOK_INBOUND_SECRET
+
+        if (!webhookSecret) {
+            console.error('WEBHOOK_INBOUND_SECRET is not configured')
+            return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 })
+        }
+
+        if (authHeader !== `Bearer ${webhookSecret}`) {
+            console.warn('❌ Unauthorized webhook attempt')
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        // 2. Parse body only after auth verification
         const body = await request.json()
 
-        // Simulating a payload from an email provider (e.g., SendGrid Inbound Parse)
         // Expected format: { "to": "ref-xyz@referkaro.com", "from": "recruiter@google.com", "subject": "Referral Confirmed" }
         const { to, from, subject, text } = body
 
