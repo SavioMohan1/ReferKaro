@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { rateLimit, getRequestIdentifier } from '@/lib/rate-limit'
-// @ts-ignore
-const pdf = require('pdf-parse')
 
 export async function POST(request: Request) {
     try {
@@ -55,24 +53,11 @@ export async function POST(request: Request) {
         const arrayBuffer = await fileData.arrayBuffer()
         const buffer = Buffer.from(arrayBuffer)
 
-        // Handle Import Interop (CommonJS vs ESM)
-        // @ts-ignore
-        const { PDFParse } = require('pdf-parse')
-
-        if (!PDFParse) {
-            throw new Error('Failed to import PDFParse class from library.')
-        }
-
-        // Initialize parser with buffer
-        // @ts-ignore
-        const parser = new PDFParse({ data: buffer })
-
-        // Extract text
-        const pdfResult = await parser.getText()
-        const resumeText = pdfResult.text
-
-        // Free memory
-        await parser.destroy()
+        // Parse PDF text content
+        // @ts-ignore - pdf-parse CommonJS interop
+        const pdfParse = require('pdf-parse')
+        const pdfResult = await pdfParse(buffer)
+        const resumeText: string = pdfResult.text
 
         // 4. Analyze with Gemini 2.5 Flash
         const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY!)

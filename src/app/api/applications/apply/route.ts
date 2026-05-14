@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { rateLimit, getRequestIdentifier } from '@/lib/rate-limit'
+import { validateCoverLetter, validateOptionalUrl } from '@/lib/validation'
 
 export async function POST(request: Request) {
     try {
@@ -31,6 +32,22 @@ export async function POST(request: Request) {
 
         if (!job_id || !employee_id || !cover_letter) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+        }
+
+        // Input validation
+        const coverLetterResult = validateCoverLetter(cover_letter)
+        if (!coverLetterResult.valid) {
+            return NextResponse.json({ error: coverLetterResult.error }, { status: 400 })
+        }
+
+        const linkedinCheck = validateOptionalUrl(linkedin_url, 'LinkedIn URL')
+        if (!linkedinCheck.valid) {
+            return NextResponse.json({ error: linkedinCheck.error }, { status: 400 })
+        }
+
+        const portfolioCheck = validateOptionalUrl(portfolio_url, 'Portfolio URL')
+        if (!portfolioCheck.valid) {
+            return NextResponse.json({ error: portfolioCheck.error }, { status: 400 })
         }
 
         // Step 1: Check user's token balance and role
@@ -109,7 +126,7 @@ export async function POST(request: Request) {
             }
 
             // RPC succeeded — notify employee (non-blocking)
-            notifyEmployee(supabase, employee_id, job_id, user.email)
+            notifyEmployee(supabase, employee_id, job_id, user.email || '')
 
             return NextResponse.json({
                 success: true,
@@ -161,7 +178,7 @@ export async function POST(request: Request) {
         }
 
         // Notify employee (non-blocking)
-        notifyEmployee(supabase, employee_id, job_id, user.email)
+        notifyEmployee(supabase, employee_id, job_id, user.email || '')
 
         return NextResponse.json({
             success: true,

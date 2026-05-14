@@ -2,9 +2,10 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Hackathon Mode: Force all emails to the verified sender to ensure delivery
-// In production, this would be the actual user's email.
-const VERIFIED_EMAIL = 'saviomohan2002@gmail.com';
+// In production, set EMAIL_FROM to your verified domain sender (e.g. notifications@referkaro.app)
+// In development/hackathon mode, set FORCE_EMAIL_TO to redirect all emails to a test address
+const EMAIL_FROM = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+const FORCE_EMAIL_TO = process.env.FORCE_EMAIL_TO || '';
 
 export async function sendEmail({
     to,
@@ -17,19 +18,19 @@ export async function sendEmail({
 }) {
     if (!process.env.RESEND_API_KEY) {
         console.warn('RESEND_API_KEY is not set. Skipping email.');
-        return;
+        return null;
     }
 
     try {
-        // HACK: For Hackathon/Dev mode without verified domain, 
-        // we can only send to the account owner.
-        // We append the "Real Recipient" to the subject line for clarity.
-        const hackathonSubject = `[TEST MODE: Intended for ${to}] ${subject}`;
+        const recipient = FORCE_EMAIL_TO || to;
+        const emailSubject = FORCE_EMAIL_TO
+            ? `[DEV → ${to}] ${subject}`
+            : subject;
 
         const data = await resend.emails.send({
-            from: 'onboarding@resend.dev',
-            to: VERIFIED_EMAIL,
-            subject: hackathonSubject,
+            from: EMAIL_FROM,
+            to: recipient,
+            subject: emailSubject,
             html: html
         });
 

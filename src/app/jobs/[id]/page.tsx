@@ -201,7 +201,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                                 borderRadius:10, padding:'14px 18px',
                                 display:'flex', alignItems:'flex-start', gap:12,
                             }}>
-                                <ExternalLink size={16} color="#00F0FF" style={{ marginTop:2, flexShrink:0 }} />
+                                <ExternalLink size={16} color="#00F0FF" style={{ marginTop:2,  }} />
                                 <div>
                                     <p style={{ fontSize:'0.78rem', fontWeight:600, color:'#00F0FF', marginBottom:4, textTransform:'uppercase', letterSpacing:'0.06em' }}>
                                         Official Job Posting
@@ -244,7 +244,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ id: string
                             borderRadius:12, padding:'18px 20px',
                             display:'flex', alignItems:'center', gap:14,
                         }}>
-                            <ShieldCheck size={22} color="#22C55E" flexShrink={0} />
+                            <ShieldCheck size={22} color="#22C55E" style={{ flexShrink: 0 }} />
                             <div>
                                 <p style={{ fontSize:'0.85rem', fontWeight:600, color:'#22C55E', marginBottom:2 }}>
                                     Verified Employee Referral

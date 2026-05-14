@@ -51,7 +51,7 @@ export async function GET(request: Request) {
         if (updateError) throw updateError
 
         // 4. Send Emails (Optional but good UX)
-        for (const app of expiredApps) {
+        for (const app of expiredApps as any[]) {
             // Email to Seeker
             if (app.seeker?.email) {
                 await resend.emails.send({
