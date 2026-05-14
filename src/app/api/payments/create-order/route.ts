@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import Razorpay from 'razorpay'
 import { createClient } from '@/lib/supabase/server'
+import { rateLimit, getRequestIdentifier } from '@/lib/rate-limit'
 
 const razorpay = new Razorpay({
     key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
@@ -14,6 +15,18 @@ export async function POST(request: Request) {
 
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        // Rate limit: 10 requests per 60 seconds
+        const rateLimitResult = rateLimit(
+            getRequestIdentifier(request, user.id),
+            { limit: 10, windowSeconds: 60 }
+        )
+        if (!rateLimitResult.success) {
+            return NextResponse.json(
+                { error: 'Too many requests. Please try again later.' },
+                { status: 429, headers: { 'Retry-After': String(rateLimitResult.resetIn) } }
+            )
         }
 
         const body = await request.json()

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { rateLimit, getRequestIdentifier } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
     try {
@@ -19,6 +20,18 @@ export async function POST(request: Request) {
 
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        // Rate limit: 3 requests per 300 seconds (expensive AI call)
+        const rateLimitResult = rateLimit(
+            getRequestIdentifier(request, user.id),
+            { limit: 3, windowSeconds: 300 }
+        )
+        if (!rateLimitResult.success) {
+            return NextResponse.json(
+                { error: 'Too many requests. Please try again later.' },
+                { status: 429, headers: { 'Retry-After': String(rateLimitResult.resetIn) } }
+            )
         }
 
         // Prepare File for Gemini

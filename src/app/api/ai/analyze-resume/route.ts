@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { rateLimit, getRequestIdentifier } from '@/lib/rate-limit'
 // @ts-ignore
 const pdf = require('pdf-parse')
 
@@ -10,6 +11,18 @@ export async function POST(request: Request) {
 
         if (!applicationId) {
             return NextResponse.json({ error: 'Application ID required' }, { status: 400 })
+        }
+
+        // Rate limit: 5 requests per 60 seconds
+        const rateLimitResult = rateLimit(
+            getRequestIdentifier(request, applicationId),
+            { limit: 5, windowSeconds: 60 }
+        )
+        if (!rateLimitResult.success) {
+            return NextResponse.json(
+                { error: 'Too many requests. Please try again later.' },
+                { status: 429, headers: { 'Retry-After': String(rateLimitResult.resetIn) } }
+            )
         }
 
         const supabase = await createClient()
