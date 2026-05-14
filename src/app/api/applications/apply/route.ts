@@ -12,6 +12,18 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
+        // Rate limit: 10 requests per 60 seconds
+        const rateLimitResult = rateLimit(
+            getRequestIdentifier(request, user.id),
+            { limit: 10, windowSeconds: 60 }
+        )
+        if (!rateLimitResult.success) {
+            return NextResponse.json(
+                { error: 'Too many requests. Please try again later.' },
+                { status: 429, headers: { 'Retry-After': String(rateLimitResult.resetIn) } }
+            )
+        }
+
         // Parse request body
         const body = await request.json()
         const { job_id, employee_id, cover_letter, linkedin_url, portfolio_url, resume_url } = body
@@ -105,15 +117,17 @@ export async function POST(request: Request) {
         }
 
         // Step 5: Non-pooling (single referral) — standard flow
-        // Deduct token (atomic update)
-        const { error: tokenError } = await supabase
+        // Deduct token (atomic update with optimistic lock)
+        const { data: updateResult, error: tokenError } = await supabase
             .from('profiles')
             .update({ token_balance: profile.token_balance - 1 })
             .eq('id', user.id)
+            .eq('token_balance', profile.token_balance)  // Optimistic lock
+            .select('id')
+            .single()
 
-        if (tokenError) {
-            console.error('Token deduction error:', tokenError)
-            return NextResponse.json({ error: 'Failed to deduct token' }, { status: 500 })
+        if (tokenError || !updateResult) {
+            return NextResponse.json({ error: 'Token deduction failed. Please try again.' }, { status: 409 })
         }
 
         // Create application

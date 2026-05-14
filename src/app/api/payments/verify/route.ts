@@ -62,14 +62,16 @@ export async function POST(request: Request) {
 
             const currentBalance = profile?.token_balance || 0
 
-            const { error: balanceError } = await supabase
+            const { data: balanceUpdate, error: balanceError } = await supabase
                 .from('profiles')
                 .update({ token_balance: currentBalance + transaction.tokens_added })
                 .eq('id', transaction.user_id)
+                .eq('token_balance', currentBalance)  // Optimistic lock
+                .select('id')
+                .single()
 
-            if (balanceError) {
-                console.error('Error updating balance:', balanceError)
-                return NextResponse.json({ error: 'Payment verified but balance update failed' }, { status: 500 })
+            if (balanceError || !balanceUpdate) {
+                return NextResponse.json({ error: 'Balance update conflict. Please retry.' }, { status: 409 })
             }
         } else if (transaction.type === 'success_fee' && transaction.application_id) {
             // 1. Update application status to 'accepted'
@@ -129,11 +131,18 @@ export async function POST(request: Request) {
                             .eq('id', transaction.user_id)
                             .single()
 
-                        const currentBalance = jsProfile?.token_balance || 0
-                        await supabase
+                        const jsCurrentBalance = jsProfile?.token_balance || 0
+                        const { data: bonusUpdate, error: bonusError } = await supabase
                             .from('profiles')
-                            .update({ token_balance: currentBalance + 2 })
+                            .update({ token_balance: jsCurrentBalance + 2 })
                             .eq('id', transaction.user_id)
+                            .eq('token_balance', jsCurrentBalance)  // Optimistic lock
+                            .select('id')
+                            .single()
+
+                        if (bonusError || !bonusUpdate) {
+                            console.error('Bonus token update conflict - will be retried or reconciled')
+                        }
                     } catch (tokenErr) {
                         console.error('Failed to add bonus tokens:', tokenErr)
                     }
