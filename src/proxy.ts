@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     let response = NextResponse.next({
         request: { headers: request.headers },
     })
@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser()
 
-    // Guard: /admin/* — only accessible by users with role='admin'
+    // Guard: /admin/* only accessible by users with role='admin'
     if (request.nextUrl.pathname.startsWith('/admin')) {
         if (!user) {
             return NextResponse.redirect(new URL('/login', request.url))

@@ -34,7 +34,7 @@ export default function FeedbackPage() {
                     </h1>
                     <p style={{ fontSize:'0.95rem', color:'#6B7A99', lineHeight:1.75, maxWidth:480, margin:'0 auto' }}>
                         Tell us what features you'd like, or report any issues. Your feedback goes straight to{' '}
-                        <span style={{ color:'#00F0FF', fontWeight:600 }}>feedback@referkaro.com</span>.
+                        <span style={{ color:'#00F0FF', fontWeight:600 }}>feedback@referkaro.app</span>.
                     </p>
                 </div>
 

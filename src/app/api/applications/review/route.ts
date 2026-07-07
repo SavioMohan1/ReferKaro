@@ -98,8 +98,8 @@ export async function POST(request: Request) {
                     return NextResponse.json({ error: 'Failed to accept application' }, { status: 500 })
                 }
 
-                // Use universal proxy email from env (saviomohan2002@gmail.com)
-                const proxyAddress = process.env.PROXY_EMAIL || 'saviomohan2002@gmail.com'
+                // Use universal proxy email from env, with a launch-domain fallback.
+                const proxyAddress = process.env.PROXY_EMAIL || `proxy@${process.env.PROXY_EMAIL_DOMAIN || 'referkaro.app'}`
                 await supabaseAdmin.from('proxy_emails').insert({
                     application_id: applicationId,
                     proxy_address: proxyAddress,
@@ -151,7 +151,7 @@ export async function POST(request: Request) {
                     })
 
                     // Generate Proxy Email using universal env address
-                    const proxyAddress = process.env.PROXY_EMAIL || 'saviomohan2002@gmail.com'
+                    const proxyAddress = process.env.PROXY_EMAIL || `proxy@${process.env.PROXY_EMAIL_DOMAIN || 'referkaro.app'}`
                     const { error: proxyErr } = await supabaseAdmin.from('proxy_emails').insert({
                         application_id: applicationId,
                         proxy_address: proxyAddress,

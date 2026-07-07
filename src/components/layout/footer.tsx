@@ -49,7 +49,26 @@ export default function Footer() {
                     <div>
                         <h3 style={{ color: '#E8EDF5', fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '20px' }}>Company</h3>
                         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                            {[['About Us', '/about'], ['Contact', '/contact'], ['Terms of Service', '#'], ['Privacy Policy', '#']].map(([label, href]) => (
+                            {[['About Us', '/about'], ['Contact', '/contact']].map(([label, href]) => (
+                                <li key={label}><Link href={href} style={{ color: '#6B7A99', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.2s' }}
+                                    onMouseEnter={e => (e.currentTarget.style.color = '#00F0FF')}
+                                    onMouseLeave={e => (e.currentTarget.style.color = '#6B7A99')}>{label}</Link></li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Legal */}
+                    <div>
+                        <h3 style={{ color: '#E8EDF5', fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '20px' }}>Legal</h3>
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {[
+                                ['Terms of Service', '/terms'],
+                                ['Privacy Policy', '/privacy'],
+                                ['Refund Policy', '/refund-policy'],
+                                ['Referral Disclaimer', '/referral-disclaimer'],
+                                ['Employee Code', '/employee-code-of-conduct'],
+                                ['Seeker Code', '/job-seeker-code-of-conduct']
+                            ].map(([label, href]) => (
                                 <li key={label}><Link href={href} style={{ color: '#6B7A99', textDecoration: 'none', fontSize: '0.9rem', transition: 'color 0.2s' }}
                                     onMouseEnter={e => (e.currentTarget.style.color = '#00F0FF')}
                                     onMouseLeave={e => (e.currentTarget.style.color = '#6B7A99')}>{label}</Link></li>
@@ -67,7 +86,7 @@ export default function Footer() {
                             </li>
                             <li style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.875rem' }}>
                                 <Mail size={16} style={{ color: '#00F0FF', flexShrink: 0 }} />
-                                <a href="mailto:support@referkaro.com" style={{ color: '#6B7A99', textDecoration: 'none' }}>support@referkaro.com</a>
+                                <a href="mailto:support@referkaro.app" style={{ color: '#6B7A99', textDecoration: 'none' }}>support@referkaro.app</a>
                             </li>
                         </ul>
                     </div>

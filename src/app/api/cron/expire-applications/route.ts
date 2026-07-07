@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
+const appUrl = process.env.NEXT_PUBLIC_URL || 'https://referkaro.app'
+const emailFrom = process.env.EMAIL_FROM || 'ReferKaro <notifications@referkaro.app>'
 
 export async function GET(request: Request) {
     // 1. Authorization Check (Vercel Cron Secret)
@@ -55,7 +57,7 @@ export async function GET(request: Request) {
             // Email to Seeker
             if (app.seeker?.email) {
                 await resend.emails.send({
-                    from: 'ReferKaro <notifications@referkaro.com>',
+                    from: emailFrom,
                     to: app.seeker.email,
                     subject: 'Referral Offer Expired ⏳',
                     html: `
@@ -70,7 +72,7 @@ export async function GET(request: Request) {
             // Email to Employee
             if (app.employee?.email) {
                 await resend.emails.send({
-                    from: 'ReferKaro <notifications@referkaro.com>',
+                    from: emailFrom,
                     to: app.employee.email,
                     subject: 'Candidate Selection Expired',
                     html: `
@@ -78,7 +80,7 @@ export async function GET(request: Request) {
                         <p>Hi ${app.employee.full_name},</p>
                         <p>The candidate you selected for <strong>${app.jobs?.role_title}</strong> failed to provide the required tokens within the 24-hour limit.</p>
                         <p>You can now log back into your dashboard and select a different candidate from the pool.</p>
-                        <a href="https://referkaro.com/dashboard" style="display:inline-block;padding:10px 20px;background:#2563eb;color:white;text-decoration:none;border-radius:5px;">Go to Dashboard</a>
+                        <a href="${appUrl}/dashboard" style="display:inline-block;padding:10px 20px;background:#2563eb;color:white;text-decoration:none;border-radius:5px;">Go to Dashboard</a>
                     `
                 });
             }

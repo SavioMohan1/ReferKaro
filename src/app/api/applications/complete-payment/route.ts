@@ -77,7 +77,7 @@ export async function POST(request: Request) {
         }
 
         // 6. Generate Proxy Email using universal env address
-        const proxyAddress = process.env.PROXY_EMAIL || 'saviomohan2002@gmail.com'
+        const proxyAddress = process.env.PROXY_EMAIL || `proxy@${process.env.PROXY_EMAIL_DOMAIN || 'referkaro.app'}`
 
         const { error: proxyError } = await supabaseAdmin.from('proxy_emails').insert({
             application_id: applicationId,

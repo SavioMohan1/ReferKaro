@@ -23,7 +23,7 @@ export default function ContactPage() {
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))', gap:24, marginBottom:48 }}>
                     {[
                         { icon: <MessageSquareText size={24} color="#00F0FF" />, title:'Chat Support', desc:"We're here to help you navigate our platform and resolve any issues fast.", extra:null },
-                        { icon: <Mail size={24} color="#7B5EFF" />, title:'Email Us', desc:'Drop us a line and we\'ll get back within 24 hours.', extra:<a href="mailto:support@referkaro.com" style={{ color:'#00F0FF', fontWeight:600, fontSize:'0.875rem', marginTop:12, display:'block' }}>support@referkaro.com</a> },
+                        { icon: <Mail size={24} color="#7B5EFF" />, title:'Email Us', desc:'Drop us a line and we\'ll get back within 24 hours.', extra:<a href="mailto:support@referkaro.app" style={{ color:'#00F0FF', fontWeight:600, fontSize:'0.875rem', marginTop:12, display:'block' }}>support@referkaro.app</a> },
                         { icon: <MapPin size={24} color="#00F0FF" />, title:'Our Office', desc:'Come say hello at our headquarters in the heart of Bangalore.', extra:<p style={{ color:'#E8EDF5', fontWeight:600, fontSize:'0.875rem', marginTop:12 }}>Bangalore, India</p> },
                     ].map(item => (
                         <div key={item.title} className="dk-card" style={{ padding:32, textAlign:'center' }}>
@@ -45,7 +45,7 @@ export default function ContactPage() {
                     <p style={{ fontSize:'0.9rem', color:'#6B7A99', marginBottom:20 }}>
                         For critical account issues, reach us directly.
                     </p>
-                    <a href="mailto:support@referkaro.com" className="dk-btn-primary" style={{ display:'inline-flex' }}>
+                    <a href="mailto:support@referkaro.app" className="dk-btn-primary" style={{ display:'inline-flex' }}>
                         Email Support Now →
                     </a>
                 </div>

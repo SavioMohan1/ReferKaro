@@ -21,7 +21,7 @@ export async function POST(request: Request) {
         // 2. Parse body only after auth verification
         const body = await request.json()
 
-        // Expected format: { "to": "ref-xyz@referkaro.com", "from": "recruiter@google.com", "subject": "Referral Confirmed" }
+        // Expected format: { "to": "ref-xyz@referkaro.app", "from": "recruiter@google.com", "subject": "Referral Confirmed" }
         const { to, from, subject, text } = body
 
         if (!to) {

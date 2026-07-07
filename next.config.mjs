@@ -10,10 +10,14 @@ export default withSentryConfig(nextConfig, {
     org: "referkaro",
     project: "referkaro",
     authToken: process.env.SENTRY_AUTH_TOKEN,
-    
+
     // Upload source maps for better error debugging
     silent: !process.env.CI,
-    
+
     // Automatically tree-shake Sentry logger statements
-    disableLogger: true,
+    webpack: {
+        treeshake: {
+            removeDebugLogging: true,
+        },
+    },
 });

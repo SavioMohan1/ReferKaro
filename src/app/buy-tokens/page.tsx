@@ -4,13 +4,7 @@ import { useState } from 'react'
 import { Loader2, CheckCircle2, Zap, Star } from 'lucide-react'
 import Script from 'next/script'
 import { useRouter } from 'next/navigation'
-
-declare global { interface Window { Razorpay: any } }
-
-const PLANS = [
-    { id:'starter', name:'Starter Pack', tokens:3, price:99,  description:'Perfect for trying out the platform.', popular:false },
-    { id:'pro',     name:'Pro Pack',     tokens:10, price:299, description:'Best value for serious job seekers.',  popular:true  },
-]
+import { TOKEN_PLANS } from '@/lib/pricing'
 
 export default function BuyTokensPage() {
     const [paymentSuccess, setPaymentSuccess] = useState(false)
@@ -18,13 +12,13 @@ export default function BuyTokensPage() {
     const [loading, setLoading] = useState<string | null>(null)
     const router = useRouter()
 
-    const handlePurchase = async (plan: typeof PLANS[0]) => {
+    const handlePurchase = async (plan: typeof TOKEN_PLANS[number]) => {
         setLoading(plan.id)
         try {
             const response = await fetch('/api/payments/create-order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ planId: plan.id, amount: plan.price, tokens: plan.tokens }),
+                body: JSON.stringify({ planId: plan.id }),
             })
             const data = await response.json()
             if (!response.ok) throw new Error(data.error)
@@ -49,7 +43,7 @@ export default function BuyTokensPage() {
                 prefill: { name:'', email:'', contact:'' },
                 theme: { color:'#00F0FF' },
             }
-            const rzp1 = new window.Razorpay(options)
+            const rzp1 = new (window as any).Razorpay(options)
             rzp1.open()
         } catch (error) {
             console.error('Purchase failed:', error)
@@ -98,7 +92,7 @@ export default function BuyTokensPage() {
                 </div>
 
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))', gap:24 }}>
-                    {PLANS.map(plan => (
+                    {TOKEN_PLANS.map(plan => (
                         <div
                             key={plan.id}
                             className="dk-card"
