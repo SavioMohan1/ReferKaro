@@ -1,19 +1,20 @@
-# Plan: Production Readiness Step 18 - Email DNS Provider Verification
+# Plan: Production Readiness Step 19 - Supabase Schema Verification
 
 ## 1. Files to be Created/Modified
-* `[MODIFY]` `PLAN.md` - Record this focused email/DNS verification task before execution.
-* `[POSSIBLE CREATE]` `scripts/check-resend-domain.js` - Add a safe checker for Resend domain status and required DNS records if current repo tooling cannot inspect provider state.
-* `[POSSIBLE MODIFY]` `scripts/check-dns-email.js` - Improve DNS/email verification only if provider evidence makes the current check incomplete.
-* `[POSSIBLE MODIFY]` `docs/launch-readiness-audit.md` - Record verified provider state and remaining launch blockers.
+* `[MODIFY]` `PLAN.md` - Record this focused Supabase schema verification task before execution.
+* `[POSSIBLE CREATE]` `scripts/check-supabase-schema.js` - Add a secret-safe checker for production Supabase tables, columns, buckets, and required RPCs.
+* `[POSSIBLE MODIFY]` `scripts/check-launch-readiness.js` - Add the Supabase schema checker to the combined launch gate if it proves useful.
+* `[POSSIBLE MODIFY]` `package.json` - Add a script alias for the new checker.
+* `[POSSIBLE MODIFY]` `docs/launch-readiness-audit.md` - Record verified Supabase state and remaining blockers.
 
 ## 2. Dependencies to be Installed
-* None planned.
+* None planned. Use the existing `@supabase/supabase-js` dependency.
 
 ## 3. Test Plan
 * Run `git status -sb` before changes.
-* Use current official Resend and Name.com documentation before relying on external API syntax.
-* Verify whether the Vercel production `RESEND_API_KEY` can access the ReferKaro domain without printing secrets.
-* Run `npm run check:dns-email` and any new provider-specific checker.
-* Verify changed files from disk with `Get-Content`.
-* Run `npm run check:secret-hygiene` before staging or committing.
-* Do not declare email ready until public DNS shows the required MX/SPF/DMARC/DKIM records.
+* Inspect existing Supabase scripts and `sql/production_launch_schema.sql`.
+* Verify the pulled Vercel production env file has Supabase URL and service-role key lengths without printing values.
+* Run the new checker against `.env.vercel.production.local`.
+* Run `npm run check:secret-hygiene`.
+* Run the combined launch gate with `LAUNCH_ENV_FILE=.env.vercel.production.local` and `ALLOW_REDACTED_SENSITIVE_ENV=1`.
+* Do not declare database readiness unless required production tables, columns, buckets, and RPCs are verified.

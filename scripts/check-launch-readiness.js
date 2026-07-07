@@ -32,6 +32,13 @@ const checks = [
       : ['scripts/check-resend-domain.js']
   },
   {
+    name: 'Supabase schema',
+    command: process.execPath,
+    args: process.env.LAUNCH_ENV_FILE
+      ? ['scripts/check-supabase-schema.js', '--env-file', process.env.LAUNCH_ENV_FILE]
+      : ['scripts/check-supabase-schema.js']
+  },
+  {
     name: 'Live site smoke',
     command: process.execPath,
     args: ['scripts/check-live-site.js']

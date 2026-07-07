@@ -304,3 +304,17 @@ Fix production domain/email consistency in server-side email templates and env d
 - Get a Resend API key with domain-read access or open the Resend dashboard for `referkaro.app` to retrieve SPF, DKIM, and custom receiving MX records.
 - Get the Name.com account username that pairs with the provided API token before automating DNS record creation.
 - Add verified Resend DNS records at Name.com, then re-run `npm run check:dns-email` until MX, SPF, DMARC, and provider DKIM checks pass.
+
+## 2026-07-07 Update - Supabase Schema Readiness Gate
+- Added `scripts/check-supabase-schema.js`, a secret-safe checker for the production Supabase URL, required launch tables/columns, storage buckets, and the `safe_pool_apply` RPC.
+- Added `npm run check:supabase-schema`.
+- Added the Supabase schema gate to `npm run check:launch`.
+- Verified `.env.local` and the pulled Vercel production env currently point to the same Supabase host: `zabzbbmkmzpngricaudc.supabase.co`.
+- Verified that Supabase host does not resolve publicly: DNS lookup returns `ENOTFOUND`.
+- Verified a bounded git-history search did not find an alternate committed Supabase project URL.
+- Current `npm run check:supabase-schema -- --env-file .env.vercel.production.local` result: fails at Supabase host DNS before table/schema checks can run.
+
+## Remaining Supabase Launch Blockers
+- Replace `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` in Vercel with values from an active, resolvable Supabase project.
+- Re-pull Vercel production env and rerun `npm run check:supabase-schema -- --env-file .env.vercel.production.local`.
+- Apply or verify `sql/production_launch_schema.sql` in the confirmed production Supabase project, then require the Supabase schema gate to pass.

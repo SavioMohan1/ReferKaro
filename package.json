@@ -17,7 +17,8 @@
         "check:live-site": "node scripts/check-live-site.js",
         "check:deployment": "node scripts/check-deployment-metadata.js",
         "check:vercel-env": "node scripts/check-vercel-env-names.js",
-        "check:resend-domain": "node scripts/check-resend-domain.js"
+        "check:resend-domain": "node scripts/check-resend-domain.js",
+        "check:supabase-schema": "node scripts/check-supabase-schema.js"
     },
     "keywords": [],
     "author": "",
