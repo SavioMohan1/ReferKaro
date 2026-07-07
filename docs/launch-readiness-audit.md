@@ -239,5 +239,20 @@ Fix production domain/email consistency in server-side email templates and env d
 - Pushed `main` to `origin` successfully: `c9ce386..9c6b4ad`.
 
 ## Remaining Git Source Sync Launch Blockers
-- Keep unrelated ad prompt docs out of launch commits unless they become part of a launch deliverable.
 - Continue using `npm run check:secret-hygiene` before future commits and deployments.
+
+## 2026-07-07 Update - Final Source Sync Cleanup
+- Added the two ReferKaro ad video prompt docs after updating their examples and CTA URLs from `referkaro.com` to `referkaro.app`.
+- Fixed trailing whitespace in the ad prompt docs after `git diff --cached --check` reported issues.
+- Created and pushed commit `d53f5df` with message `Add ReferKaro ad video prompts`.
+- Created and pushed cleanup commit `de4ce72` with message `Clean ad prompt whitespace`.
+- Verified `git status -sb` reports `## main...origin/main`, meaning local `main` is clean and aligned with `origin/main`.
+- `npm run check:deployment` now passes: Vercel project link, Vercel CLI, Git remote, branch, and clean working tree all pass.
+- `npm run check:secret-hygiene` passes with no credential-like patterns found in scanned repo files or git remotes.
+- Current combined gate result: `PASS Secret hygiene`, `FAIL DNS and email`, `PASS Live site smoke`, `PASS Deployment metadata`, `FAIL Vercel env names`, and `FAIL Production environment`.
+
+## Remaining Final Launch Blockers
+- Configure domain email DNS: MX, SPF, DKIM, and DMARC.
+- Add `RAZORPAY_WEBHOOK_SECRET` to Vercel after creating the live Razorpay webhook.
+- Verify Vercel production env values use live Razorpay credentials and correct `referkaro.app` values, not just that the variable names exist.
+- Run a real low-value Razorpay live payment test and verify transaction reconciliation.
