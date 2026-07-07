@@ -256,3 +256,19 @@ Fix production domain/email consistency in server-side email templates and env d
 - Add `RAZORPAY_WEBHOOK_SECRET` to Vercel after creating the live Razorpay webhook.
 - Verify Vercel production env values use live Razorpay credentials and correct `referkaro.app` values, not just that the variable names exist.
 - Run a real low-value Razorpay live payment test and verify transaction reconciliation.
+
+## 2026-07-07 Update - Vercel Env Value Verification
+- Added `--env-file` support to `scripts/check-launch-env.js` so production-shaped env files can be checked explicitly instead of always reading `.env.local`.
+- Added `LAUNCH_ENV_FILE` support to `scripts/check-launch-readiness.js` so the combined launch gate can point at a pulled Vercel production env file.
+- Added an explicit `--allow-redacted-sensitive` mode for sensitive Vercel variables that are present in Vercel but non-readable in pulled env files. This matches Vercel's sensitive environment variable behavior: sensitive values are non-readable once created.
+- Updated Vercel production env values for `ADMIN_EMAIL=admin@referkaro.app` and `PROXY_EMAIL=proxy@referkaro.app`.
+- Generated and set sensitive Vercel production values for `WEBHOOK_INBOUND_SECRET` and `RAZORPAY_WEBHOOK_SECRET`.
+- Verified `.gitignore` contains `.env*.local`, so the pulled `.env.vercel.production.local` file is ignored.
+- Verified `npm run check:launch` with `LAUNCH_ENV_FILE=.env.vercel.production.local` and `ALLOW_REDACTED_SENSITIVE_ENV=1`: secret hygiene, live-site smoke, and Vercel env-name gates pass.
+- Current combined gate result with pulled Vercel production env: `PASS Secret hygiene`, `FAIL DNS and email`, `PASS Live site smoke`, `FAIL Deployment metadata`, `PASS Vercel env names`, and `FAIL Production environment`.
+
+## Remaining Vercel Env Value Launch Blockers
+- Replace the current Vercel `NEXT_PUBLIC_RAZORPAY_KEY_ID` test key with a live Razorpay key after Razorpay live mode is activated.
+- Configure the Razorpay dashboard webhook at `https://referkaro.app/api/webhooks/razorpay` using the same secret that was set in Vercel as `RAZORPAY_WEBHOOK_SECRET`.
+- Redeploy after production env changes so the live deployment picks up the latest Vercel environment configuration.
+- Keep the production env gate failing until a live Razorpay key is verified and DNS/email blockers are resolved.

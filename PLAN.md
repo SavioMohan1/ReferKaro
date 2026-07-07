@@ -1,19 +1,16 @@
-# Plan: Production Readiness Step 16 - Git Source Sync for Deployed Launch Build
+# Plan: Production Readiness Step 17 - External Launch Blocker Verification
 
 ## 1. Files to be Created/Modified
-* `[MODIFY]` Git index/history - Stage and commit the launch-readiness source state that was deployed to Vercel production.
-* `[REMOTE]` GitHub `origin/main` - Push the launch-readiness commit if authentication is available.
-* `[MODIFY]` `docs/launch-readiness-audit.md` - Record commit/push result and remaining launch blockers.
-* `[MODIFY]` `PLAN.md` - Record this focused Git source-sync task before execution.
+* `[MODIFY]` `PLAN.md` - Record this focused verification and launch-blocker task before execution.
+* `[POSSIBLE MODIFY]` `scripts/*` - Improve launch verification only if current checks miss an actionable blocker.
+* `[POSSIBLE MODIFY]` `docs/launch-readiness-audit.md` - Record verified current status and any remaining launch blockers.
 
 ## 2. Dependencies to be Installed
-* None.
+* None planned.
 
 ## 3. Test Plan
-* Run `npm run check:secret-hygiene` before staging.
-* Run `npm run check:live-site` to confirm the deployed public site still matches key routes.
-* Run `npm run build -- --webpack` and confirm no warnings.
-* Stage only launch-related files and verify staged files with `git diff --cached --name-status`.
-* Commit the staged launch-readiness changes.
-* Push to `origin main` if authentication succeeds.
-* Read `docs/launch-readiness-audit.md` back from disk after updating it.
+* Run `git status -sb` to confirm the starting worktree state.
+* Run `npm run check:launch` and read the output.
+* Run targeted checks for any failing launch gate.
+* If scripts or docs are changed, verify file contents from disk with `Get-Content` and rerun the relevant check.
+* Do not declare the app fully launch-ready unless all launch gates and required transaction/email/domain checks are verified.

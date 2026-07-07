@@ -2,7 +2,11 @@ const fs = require('fs');
 const path = require('path');
 
 const root = path.resolve(__dirname, '..');
-const envPath = path.join(root, '.env.local');
+const args = process.argv.slice(2);
+const envFileArgIndex = args.indexOf('--env-file');
+const envPath = envFileArgIndex >= 0 && args[envFileArgIndex + 1]
+  ? path.resolve(root, args[envFileArgIndex + 1])
+  : path.join(root, '.env.local');
 
 function parseDotEnv(filePath) {
   if (!fs.existsSync(filePath)) return {};
@@ -26,7 +30,12 @@ function parseDotEnv(filePath) {
 
 const localEnv = parseDotEnv(envPath);
 const env = { ...localEnv, ...process.env };
-const isProductionCheck = process.argv.includes('--production') || env.NODE_ENV === 'production' || env.VERCEL_ENV === 'production';
+const isProductionCheck = args.includes('--production') || env.NODE_ENV === 'production' || env.VERCEL_ENV === 'production';
+const allowRedactedSensitive = args.includes('--allow-redacted-sensitive');
+const redactedSensitiveNames = new Set([
+  'RAZORPAY_WEBHOOK_SECRET',
+  'WEBHOOK_INBOUND_SECRET'
+]);
 const results = [];
 
 function valueOf(name) {
@@ -60,7 +69,9 @@ function requireUrl(name, expectedHost) {
 
 function requireSecret(name, minLength = 24) {
   const value = valueOf(name);
-  if (!value) add('fail', name, 'required secret is missing');
+  if (!value && allowRedactedSensitive && redactedSensitiveNames.has(name) && Object.prototype.hasOwnProperty.call(localEnv, name)) {
+    add('warn', name, 'value is unavailable from sensitive Vercel env pull; verify in Vercel runtime/dashboard');
+  } else if (!value) add('fail', name, 'required secret is missing');
   else if (value.length < minLength) add('fail', name, `secret should be at least ${minLength} characters`);
   else add('pass', name, 'present with acceptable length');
 }
@@ -135,6 +146,8 @@ const failures = results.filter(r => r.status === 'fail');
 const warnings = results.filter(r => r.status === 'warn');
 
 console.log(`ReferKaro launch env check (${isProductionCheck ? 'production' : 'local/dev'} mode)`);
+console.log(`Env file: ${path.relative(root, envPath) || envPath}`);
+console.log('No secret values are printed.\n');
 for (const result of results) {
   console.log(`${icon[result.status]} ${result.name}: ${result.message}`);
 }

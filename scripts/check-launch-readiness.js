@@ -2,6 +2,17 @@
 
 const { spawnSync } = require('node:child_process')
 
+function productionEnvArgs() {
+  const args = ['scripts/check-launch-env.js', '--production']
+  if (process.env.LAUNCH_ENV_FILE) {
+    args.push('--env-file', process.env.LAUNCH_ENV_FILE)
+  }
+  if (process.env.ALLOW_REDACTED_SENSITIVE_ENV === '1') {
+    args.push('--allow-redacted-sensitive')
+  }
+  return args
+}
+
 const checks = [
   {
     name: 'Secret hygiene',
@@ -31,7 +42,7 @@ const checks = [
   {
     name: 'Production environment',
     command: process.execPath,
-    args: ['scripts/check-launch-env.js', '--production']
+    args: productionEnvArgs()
   }
 ]
 
