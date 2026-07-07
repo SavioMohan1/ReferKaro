@@ -25,6 +25,13 @@ const checks = [
     args: ['scripts/check-dns-email.js']
   },
   {
+    name: 'Resend domain',
+    command: process.execPath,
+    args: process.env.LAUNCH_ENV_FILE
+      ? ['scripts/check-resend-domain.js', '--env-file', process.env.LAUNCH_ENV_FILE]
+      : ['scripts/check-resend-domain.js']
+  },
+  {
     name: 'Live site smoke',
     command: process.execPath,
     args: ['scripts/check-live-site.js']

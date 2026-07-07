@@ -16,7 +16,8 @@
         "check:launch": "node scripts/check-launch-readiness.js",
         "check:live-site": "node scripts/check-live-site.js",
         "check:deployment": "node scripts/check-deployment-metadata.js",
-        "check:vercel-env": "node scripts/check-vercel-env-names.js"
+        "check:vercel-env": "node scripts/check-vercel-env-names.js",
+        "check:resend-domain": "node scripts/check-resend-domain.js"
     },
     "keywords": [],
     "author": "",

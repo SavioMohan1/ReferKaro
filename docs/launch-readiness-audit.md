@@ -288,3 +288,19 @@ Fix production domain/email consistency in server-side email templates and env d
 - Replace Vercel Razorpay test credentials with live Razorpay credentials.
 - Configure and test the Razorpay live webhook using the Vercel `RAZORPAY_WEBHOOK_SECRET`.
 - Run a real low-value Razorpay live transaction and verify transaction reconciliation.
+
+## 2026-07-07 Update - Resend Domain Readiness Gate
+- Confirmed `referkaro.app` uses Name.com nameservers: `ns1djs.name.com`, `ns2fkr.name.com`, `ns3sxz.name.com`, and `ns4lny.name.com`.
+- Checked current official Resend docs for domain listing/retrieval and receiving custom-domain DNS requirements.
+- Checked current official Name.com docs for DNS record creation and confirmed Name.com API authentication requires both account username and API token.
+- Added `scripts/check-resend-domain.js`, a secret-safe checker that uses `RESEND_API_KEY` to verify whether `referkaro.app` exists in Resend, whether sending is verified, and what DNS records Resend reports.
+- Added `npm run check:resend-domain`.
+- Added the Resend domain gate to `npm run check:launch`.
+- Verified `npm run check:resend-domain -- --env-file .env.vercel.production.local` fails with Resend `restricted_api_key`: the current production key is restricted to sending emails and cannot read domain metadata or DNS records.
+- Verified `npm run check:dns-email` still fails because public DNS has no MX, no SPF TXT, and no DMARC TXT for `referkaro.app`.
+- Current combined gate result with pulled Vercel production env: `PASS Secret hygiene`, `FAIL DNS and email`, `FAIL Resend domain`, `PASS Live site smoke`, `FAIL Deployment metadata`, `PASS Vercel env names`, and `FAIL Production environment`.
+
+## Remaining Resend/Name.com Launch Blockers
+- Get a Resend API key with domain-read access or open the Resend dashboard for `referkaro.app` to retrieve SPF, DKIM, and custom receiving MX records.
+- Get the Name.com account username that pairs with the provided API token before automating DNS record creation.
+- Add verified Resend DNS records at Name.com, then re-run `npm run check:dns-email` until MX, SPF, DMARC, and provider DKIM checks pass.
