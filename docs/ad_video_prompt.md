@@ -1,6 +1,6 @@
 # ReferKaro Ad Video AI Generation Prompt Document
 
-This document provides a highly detailed, scene-by-scene script and copy-paste prompts designed for modern AI video generators (such as **Sora**, **Runway Gen-3 Alpha**, **Kling**, or **Luma Dream Machine**) and voiceover tools (like **ElevenLabs** or **HeyGen**). 
+This document provides a highly detailed, scene-by-scene script and copy-paste prompts designed for modern AI video generators (such as **Sora**, **Runway Gen-3 Alpha**, **Kling**, or **Luma Dream Machine**) and voiceover tools (like **ElevenLabs** or **HeyGen**).
 
 ---
 
@@ -56,7 +56,7 @@ This document provides a highly detailed, scene-by-scene script and copy-paste p
 ---
 
 ### Scene 5: Dual Pathways: Single vs. Pooling Referral (Duration: 0:35 - 0:48)
-* **Visual:** The screen splits. 
+* **Visual:** The screen splits.
   * **Left Side (Single Track):** 1-on-1 direct review. A profile lights up, and a payment complete prompt accepts them directly.
   * **Right Side (Pooling Track):** A group of 10 stylized candidate cards fill a circular progress bar. One card flashes gold, the other 9 turn into rejected states, auto-releasing their slots safely.
 * **On-Screen Text:** "Single: 1-on-1 Review | Pooling: 10 Seekers, 1 Referral"
