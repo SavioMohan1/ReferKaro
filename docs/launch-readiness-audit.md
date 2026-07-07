@@ -272,3 +272,19 @@ Fix production domain/email consistency in server-side email templates and env d
 - Configure the Razorpay dashboard webhook at `https://referkaro.app/api/webhooks/razorpay` using the same secret that was set in Vercel as `RAZORPAY_WEBHOOK_SECRET`.
 - Redeploy after production env changes so the live deployment picks up the latest Vercel environment configuration.
 - Keep the production env gate failing until a live Razorpay key is verified and DNS/email blockers are resolved.
+
+## 2026-07-07 Update - Env Config Production Redeploy
+- Created and pushed commit `33cb90c` with message `Improve Vercel env launch checks`.
+- Deployed production with `vercel deploy --prod --yes` after updating Vercel production environment variables.
+- Vercel deployment ID: `dpl_CMNPMj9qCTK2fDdpyWZiKFsGJX73`.
+- Vercel production deployment URL: `https://referkaro-jyb9sy309-saviomohan2002-6806s-projects.vercel.app`.
+- Vercel aliased the deployment to `https://referkaro.app`.
+- Deployment build completed successfully on Vercel with Next.js 16.1.6 and Sentry source map upload.
+- Post-deploy `npm run check:live-site` passed for `/`, `/about`, `/jobs`, `/contact`, `/login`, `/privacy`, and `/terms`.
+- Post-deploy `npm run check:deployment` passed: Vercel project link, Vercel CLI, Git remote, branch, and clean working tree all pass.
+
+## Remaining Production Redeploy Launch Blockers
+- Configure domain email DNS: MX, SPF, DKIM, and DMARC.
+- Replace Vercel Razorpay test credentials with live Razorpay credentials.
+- Configure and test the Razorpay live webhook using the Vercel `RAZORPAY_WEBHOOK_SECRET`.
+- Run a real low-value Razorpay live transaction and verify transaction reconciliation.
