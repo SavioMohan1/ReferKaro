@@ -227,3 +227,17 @@ Fix production domain/email consistency in server-side email templates and env d
 - Commit/push the deployed local changes so GitHub and Vercel source history match the deployed production state.
 - Verify production env values use live Razorpay credentials and correct `referkaro.app` email/domain values.
 - Run a real low-value Razorpay live payment test and verify transaction reconciliation.
+
+## 2026-07-07 Update - Git Source Sync
+- Ran `npm run check:secret-hygiene` before staging; it passed with no credential-like patterns found in scanned repo files or git remotes.
+- Ran `npm run check:live-site`; it passed with all checked public routes returning HTTP 200.
+- Ran `npm run build -- --webpack`; it passed with no warnings.
+- Staged the launch-related source, configuration, legal pages, launch checkers, schema, audit, and migration files.
+- Left unrelated ad prompt docs unstaged: `docs/ad_video_prompt.md` and `docs/ad_video_prompt_15s.md`.
+- `git diff --cached --check` initially found whitespace issues; fixed them and reran the check successfully.
+- Created commit `9c6b4ad` with message `Prepare ReferKaro launch readiness`.
+- Pushed `main` to `origin` successfully: `c9ce386..9c6b4ad`.
+
+## Remaining Git Source Sync Launch Blockers
+- Keep unrelated ad prompt docs out of launch commits unless they become part of a launch deliverable.
+- Continue using `npm run check:secret-hygiene` before future commits and deployments.
