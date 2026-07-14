@@ -363,3 +363,9 @@ Fix production domain/email consistency in server-side email templates and env d
 - Post-deploy `npm run check:live-site` passed for `/`, `/about`, `/jobs`, `/contact`, `/login`, `/privacy`, and `/terms`.
 - Post-deploy unauthenticated request to `https://referkaro.app/api/cron/testmail-inbound` returned HTTP 401, confirming the cron route is live and protected.
 - Post-deploy combined launch gate still reports not ready because DNS/email, Resend domain access, `TESTMAIL_API_KEY`, and live Razorpay credentials remain unresolved.
+
+## 2026-07-14 Update - Production Launch Operations Runbook
+- Added `docs/launch-runbook.md` as the canonical operator checklist for the remaining external launch work.
+- The runbook uses dashboard-based secret entry and does not include credential values.
+- It defines verification evidence for Testmail polling, idempotent live Razorpay reconciliation, domain email DNS, final build, and public deployment checks.
+- ReferKaro remains not launch-ready until every runbook exit criterion and `npm run check:launch` gate passes.
