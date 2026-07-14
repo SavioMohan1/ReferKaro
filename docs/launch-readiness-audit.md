@@ -314,10 +314,9 @@ Fix production domain/email consistency in server-side email templates and env d
 - Verified a bounded git-history search did not find an alternate committed Supabase project URL.
 - Current `npm run check:supabase-schema -- --env-file .env.vercel.production.local` result: fails at Supabase host DNS before table/schema checks can run.
 
-## Remaining Supabase Launch Blockers
-- Replace `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` in Vercel with values from an active, resolvable Supabase project.
-- Re-pull Vercel production env and rerun `npm run check:supabase-schema -- --env-file .env.vercel.production.local`.
-- Apply or verify `sql/production_launch_schema.sql` in the confirmed production Supabase project, then require the Supabase schema gate to pass.
+## Supabase Launch Status
+- Earlier DNS resolution failures for the configured Supabase host were transient or stale; the latest combined launch gate verifies the host, schema, buckets, and `safe_pool_apply` RPC successfully.
+- Keep `npm run check:supabase-schema -- --env-file .env.vercel.production.local` in the launch gate so future schema drift is caught before launch.
 
 ## 2026-07-14 Update - Testmail Proxy Mail Integration
 - Checked current official Testmail documentation before coding the integration. The JSON API endpoint is `https://api.testmail.app/api/json`; inbox addresses use `{namespace}.{tag}@inbox.testmail.app`; filtering supports namespace, tag, timestamp, limit, and live query parameters.
@@ -338,3 +337,19 @@ Fix production domain/email consistency in server-side email templates and env d
 - Add `TESTMAIL_API_KEY` to Vercel production through a secure channel. It was not added through shell commands to avoid exposing the bearer token in command logs.
 - Re-pull Vercel production env and rerun `npm run check:vercel-env` plus `npm run check:launch-env -- --production --env-file .env.vercel.production.local --allow-redacted-sensitive`.
 - Configure an appropriate production scheduler for `/api/cron/testmail-inbound`. Vercel Hobby cron is limited to daily schedules; frequent mail monitoring requires a Pro-compatible cron cadence or an external scheduler that sends `Authorization: Bearer <CRON_SECRET>`.
+
+## 2026-07-14 Update - Current Launch Gate After Testmail Commit
+- Created and pushed commit `2fc9ac5` with message `Add Testmail proxy mail polling`.
+- Re-ran the combined launch gate with `LAUNCH_ENV_FILE=.env.vercel.production.local` and `ALLOW_REDACTED_SENSITIVE_ENV=1`.
+- Supabase schema now passes: the configured Supabase host resolves, required tables/columns pass, `resumes` and `verification-documents` buckets pass, and `safe_pool_apply` returns the no-write `pool_full` probe.
+- Live-site smoke passes for `/`, `/about`, `/jobs`, `/contact`, `/login`, `/privacy`, and `/terms`.
+- Deployment metadata passes: Vercel project link, Vercel CLI, Git remote, branch, and clean working tree all pass.
+- Vercel env names fail only because `TESTMAIL_API_KEY` is not yet present in Vercel production.
+- Production env value check fails because `NEXT_PUBLIC_RAZORPAY_KEY_ID` is still a Razorpay test key and `TESTMAIL_API_KEY` is missing.
+- Current combined gate result: `PASS Secret hygiene`, `FAIL DNS and email`, `FAIL Resend domain`, `PASS Supabase schema`, `PASS Live site smoke`, `PASS Deployment metadata`, `FAIL Vercel env names`, and `FAIL Production environment`.
+
+## Remaining Current Launch Blockers
+- Add `TESTMAIL_API_KEY` to Vercel production securely.
+- Replace Razorpay test credentials with live Razorpay credentials and verify the live webhook.
+- Configure domain email DNS and Resend domain records.
+- Configure a production-appropriate scheduler for `/api/cron/testmail-inbound`.
