@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { createProxyAddress } from '@/lib/proxy-email'
 
 const supabaseAdmin = createAdminClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -146,9 +147,7 @@ export async function reconcileRazorpayPayment(orderId: string, paymentId: strin
             return { success: false, status: 500, error: 'Payment verified but application details were not found' }
         }
 
-        const randomString = crypto.randomBytes(4).toString('hex')
-        const domain = process.env.PROXY_EMAIL_DOMAIN || 'referkaro.app'
-        const proxyAddress = `ref-${randomString}@${domain}`
+        const proxyAddress = createProxyAddress(lockedTransaction.application_id)
 
         const { error: proxyError } = await supabaseAdmin
             .from('proxy_emails')

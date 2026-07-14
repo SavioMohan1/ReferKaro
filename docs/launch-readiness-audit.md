@@ -318,3 +318,23 @@ Fix production domain/email consistency in server-side email templates and env d
 - Replace `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` in Vercel with values from an active, resolvable Supabase project.
 - Re-pull Vercel production env and rerun `npm run check:supabase-schema -- --env-file .env.vercel.production.local`.
 - Apply or verify `sql/production_launch_schema.sql` in the confirmed production Supabase project, then require the Supabase schema gate to pass.
+
+## 2026-07-14 Update - Testmail Proxy Mail Integration
+- Checked current official Testmail documentation before coding the integration. The JSON API endpoint is `https://api.testmail.app/api/json`; inbox addresses use `{namespace}.{tag}@inbox.testmail.app`; filtering supports namespace, tag, timestamp, limit, and live query parameters.
+- Checked current official Vercel Cron documentation before adding the protected cron route. Vercel sends `CRON_SECRET` as a bearer `Authorization` header when configured.
+- Added `src/lib/proxy-email.ts` so proxy addresses are generated in one place. When `TESTMAIL_NAMESPACE` is configured, ReferKaro generates per-application Testmail inbox addresses under `@inbox.testmail.app`.
+- Added `src/lib/email/inbound-email.ts` so inbound proxy messages from any provider use the same idempotent referral-proof flow: lookup proxy, mark application `referred`, forward to the real candidate, and deactivate the proxy to avoid duplicate processing.
+- Replaced `src/app/api/webhooks/inbound-email/route.ts` with a small authenticated route that delegates to the shared inbound processor.
+- Added `src/lib/testmail/client.ts` for fetching Testmail JSON inbox messages without printing secrets.
+- Added `src/app/api/cron/testmail-inbound/route.ts`, protected by `CRON_SECRET`, to poll Testmail and process proxy emails.
+- Updated proxy generation in application review, complete-payment, and Razorpay reconciliation flows to use `createProxyAddress`.
+- Added `TESTMAIL_API_KEY`, `TESTMAIL_NAMESPACE`, `TESTMAIL_TAG_PREFIX`, `TESTMAIL_POLL_LIMIT`, and `TESTMAIL_TIMESTAMP_FROM` to `.env.example`.
+- Added `TESTMAIL_API_KEY` and `TESTMAIL_NAMESPACE` to launch env and Vercel env-name checks.
+- Set safe non-secret Vercel production values: `TESTMAIL_NAMESPACE=rnuj6`, `TESTMAIL_TAG_PREFIX=referkaro`, and `TESTMAIL_POLL_LIMIT=25`.
+- Verified `npm run build -- --webpack` passes and includes `/api/cron/testmail-inbound`.
+- Verified `npm run check:secret-hygiene` passes after the code change.
+
+## Remaining Testmail Launch Blockers
+- Add `TESTMAIL_API_KEY` to Vercel production through a secure channel. It was not added through shell commands to avoid exposing the bearer token in command logs.
+- Re-pull Vercel production env and rerun `npm run check:vercel-env` plus `npm run check:launch-env -- --production --env-file .env.vercel.production.local --allow-redacted-sensitive`.
+- Configure an appropriate production scheduler for `/api/cron/testmail-inbound`. Vercel Hobby cron is limited to daily schedules; frequent mail monitoring requires a Pro-compatible cron cadence or an external scheduler that sends `Authorization: Bearer <CRON_SECRET>`.

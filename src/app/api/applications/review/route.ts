@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { createProxyAddress } from '@/lib/proxy-email'
 
 // Admin client for all privileged writes — bypasses RLS after auth verification
 const supabaseAdmin = createAdminClient(
@@ -98,8 +99,7 @@ export async function POST(request: Request) {
                     return NextResponse.json({ error: 'Failed to accept application' }, { status: 500 })
                 }
 
-                // Use universal proxy email from env, with a launch-domain fallback.
-                const proxyAddress = process.env.PROXY_EMAIL || `proxy@${process.env.PROXY_EMAIL_DOMAIN || 'referkaro.app'}`
+                const proxyAddress = createProxyAddress(applicationId)
                 await supabaseAdmin.from('proxy_emails').insert({
                     application_id: applicationId,
                     proxy_address: proxyAddress,
@@ -150,8 +150,7 @@ export async function POST(request: Request) {
                         status: 'success'
                     })
 
-                    // Generate Proxy Email using universal env address
-                    const proxyAddress = process.env.PROXY_EMAIL || `proxy@${process.env.PROXY_EMAIL_DOMAIN || 'referkaro.app'}`
+                    const proxyAddress = createProxyAddress(applicationId)
                     const { error: proxyErr } = await supabaseAdmin.from('proxy_emails').insert({
                         application_id: applicationId,
                         proxy_address: proxyAddress,

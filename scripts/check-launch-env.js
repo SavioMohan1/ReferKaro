@@ -34,7 +34,8 @@ const isProductionCheck = args.includes('--production') || env.NODE_ENV === 'pro
 const allowRedactedSensitive = args.includes('--allow-redacted-sensitive');
 const redactedSensitiveNames = new Set([
   'RAZORPAY_WEBHOOK_SECRET',
-  'WEBHOOK_INBOUND_SECRET'
+  'WEBHOOK_INBOUND_SECRET',
+  'TESTMAIL_API_KEY'
 ]);
 const results = [];
 
@@ -131,6 +132,9 @@ else add('warn', 'PROXY_EMAIL', 'missing; app will fall back to proxy@referkaro.
 
 if (valueOf('PROXY_EMAIL_DOMAIN') !== 'referkaro.app') add('fail', 'PROXY_EMAIL_DOMAIN', 'must be referkaro.app');
 else add('pass', 'PROXY_EMAIL_DOMAIN', 'referkaro.app');
+
+requireSecret('TESTMAIL_API_KEY');
+requirePresent('TESTMAIL_NAMESPACE');
 
 requireSecret('CRON_SECRET');
 requireSecret('WEBHOOK_INBOUND_SECRET');
