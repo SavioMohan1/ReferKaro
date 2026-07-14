@@ -353,3 +353,13 @@ Fix production domain/email consistency in server-side email templates and env d
 - Replace Razorpay test credentials with live Razorpay credentials and verify the live webhook.
 - Configure domain email DNS and Resend domain records.
 - Configure a production-appropriate scheduler for `/api/cron/testmail-inbound`.
+
+## 2026-07-14 Update - Testmail Proxy Mail Production Deploy
+- Deployed production with `vercel deploy --prod --yes` after adding the Testmail proxy-mail polling code.
+- Vercel deployment ID: `dpl_4sRcFUrNRaYKoJ5VZxGnS379eiPG`.
+- Vercel production deployment URL: `https://referkaro-k5xvr370y-saviomohan2002-6806s-projects.vercel.app`.
+- Vercel aliased the deployment to `https://referkaro.app`.
+- Vercel build completed successfully and included `/api/cron/testmail-inbound`.
+- Post-deploy `npm run check:live-site` passed for `/`, `/about`, `/jobs`, `/contact`, `/login`, `/privacy`, and `/terms`.
+- Post-deploy unauthenticated request to `https://referkaro.app/api/cron/testmail-inbound` returned HTTP 401, confirming the cron route is live and protected.
+- Post-deploy combined launch gate still reports not ready because DNS/email, Resend domain access, `TESTMAIL_API_KEY`, and live Razorpay credentials remain unresolved.
