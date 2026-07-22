@@ -1,27 +1,21 @@
-# Plan: Production Email Flow Verification
+# Plan: Razorpay Alternative Research
 
 ## 1. Files to be Created/Modified
-* `[MODIFY]` `PLAN.md` - Track the two controlled production email tests and evidence.
-* `[MODIFY]` `src/lib/email/inbound-email.ts` - Stop writing the absent production `applications.updated_at` column during finalization.
-* `[MODIFY]` `scripts/test-inbound-email-retry.mjs` - Keep the success-state regression aligned with the production schema.
-* `[MODIFY]` `docs/launch-readiness-audit.md` - Record only verified, secret-safe test results.
+* `[MODIFY]` `PLAN.md` - Track the payment-provider comparison and repo evidence.
+* No application source files will be changed during this research task.
 
 ## 2. Dependencies to be Installed
-* None expected. Existing repository scripts, environment configuration, and provider APIs will be used.
+* None.
 
 ## 3. Test Plan
-* Inspect the outbound Resend helper, Testmail client, proxy schema, and available secret-safe operational scripts.
-* Select a controlled destination that does not expose or unexpectedly contact an unrelated user.
-* Send one uniquely tagged outbound message through production Resend and verify its delivery in Testmail.
-* Select or create a safe active proxy test record, send one uniquely tagged Testmail message to it, and invoke the protected production poll.
-* Verify forwarding evidence, application status transition, proxy deactivation, and retry/idempotency behavior without printing secrets or personal addresses.
-* Run the inbound regression suite, TypeScript, production build, secret hygiene, and disk verification.
-* Deploy the verified fix and replay the same provider message/idempotency key to complete production finalization without duplicate forwarding.
+* Inspect the current Razorpay order, verification, webhook, and reconciliation implementation.
+* Identify the payment capabilities ReferKaro actually requires from repository evidence.
+* Verify current India availability, payment methods, webhook/security model, SDK/API support, and pricing from official provider sources.
+* Rank viable alternatives by migration effort, onboarding risk, and production suitability.
+* Clearly distinguish payment processors from authentication/billing wrappers such as Clerk.
 
 ## 4. Result
-* Outbound test `outboundmrw437ri` passed: Resend accepted the message and Testmail received the exact subject.
-* Proxy test `proxyflowmrw44bzc` reached Testmail, the production forward was accepted by Resend, and Gmail received the uniquely tagged forwarded message.
-* Production finalization exposed two schema mismatches: `applications.updated_at` is absent and the live `applications_status_check` constraint rejects `referred`.
-* Removed the nonessential `updated_at` write, passed tests/build, and deployed `dpl_9RNM9rtZYjtYCnQX9YTJbGrQtpkt`.
-* After the live status constraint migration, the idempotent replay returned HTTP 200, processed one message, changed the application to `referred`, and deactivated the proxy.
-* Gmail contains exactly one message with the unique forwarded subject, confirming the replay did not create a duplicate.
+* Recommend Cashfree Payments as the first Razorpay replacement to evaluate for ReferKaro.
+* PhonePe Payment Gateway is the second choice; PayU is viable but would require a less direct checkout migration.
+* Stripe is invite-only in India and lacks local payment methods for Indian accounts, making it a poor launch unblocker.
+* Clerk Billing is not a payment gateway replacement: it uses Stripe, is subscription-focused, supports only USD, and is not supported in India.

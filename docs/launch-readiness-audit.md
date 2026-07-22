@@ -439,3 +439,12 @@ Fix production domain/email consistency in server-side email templates and env d
 - Replayed `proxyflowmrw44bzc` with the stable Resend idempotency key. The protected production poll returned HTTP 200 with `processed: 1`, the application changed to `referred`, and the proxy became inactive.
 - Gmail search returned exactly one message for the unique forwarded subject, confirming the replay completed database finalization without sending a duplicate.
 - Both requested production email tests are now complete.
+
+## 2026-07-22 Update - Razorpay Alternative Research
+- Compared current official documentation for Cashfree Payments, PhonePe Payment Gateway, PayU, Stripe India, and Clerk Billing against ReferKaro's one-time INR token and success-fee flow.
+- Cashfree is the recommended first alternative: backend order creation returns an order ID and payment session, hosted web checkout supports INR payment collection, and signed success/failure webhooks map closely to the current reconciliation architecture.
+- PhonePe PG is the second choice: it supports UPI, cards, net banking, a Node.js backend SDK, checkout sessions, refunds, status checks, and recommended server-to-server webhooks.
+- PayU is viable and publishes 2% domestic pricing plus GST, but its hosted/form-oriented checkout and hashing model would be a less direct migration from the current embedded Razorpay checkout.
+- Stripe is not recommended as the immediate India launch fallback because new Indian accounts are invite-only and Stripe's India documentation says local payment methods are not supported.
+- Clerk Billing cannot replace Razorpay: it uses Stripe for processing, targets recurring subscriptions, supports only USD, does not support refunds directly, and is currently unsupported in India.
+- No payment source code was changed. Provider migration should begin only after merchant onboarding and production API access are approved.
