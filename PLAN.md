@@ -1,24 +1,25 @@
-# Plan: Testmail Forwarding Retry Safety
+# Plan: Resend Domain Verification
 
 ## 1. Files to be Created/Modified
-* `[MODIFY]` `PLAN.md` - Track the focused Testmail blocker fix and verification.
-* `[MODIFY]` `src/lib/email/inbound-email.ts` - Preserve retryability when candidate forwarding fails.
-* `[MODIFY]` or `[CREATE]` the existing inbound-email test file - Cover successful, failed, and retried forwarding behavior.
-* `[MODIFY]` `docs/launch-readiness-audit.md` - Record only verified results and remaining payment work.
+* `[MODIFY]` `PLAN.md` - Track the Resend DNS verification operation.
+* `[MODIFY]` `scripts/check-dns-email.js` - Validate the Resend sending subdomain and DKIM selector used by the deployed architecture.
+* `[MODIFY]` `docs/launch-readiness-audit.md` - Record only verified DNS and Resend results.
+* No application runtime source files are expected to change.
 
 ## 2. Dependencies to be Installed
-* None expected. Existing repository libraries and test tooling will be used.
+* None.
 
 ## 3. Test Plan
-* [x] Inspect the current inbound processor, related database helpers, and existing tests.
-* [x] Add a regression test proving a forwarding failure does not mark the application referred or deactivate the proxy.
-* [x] Add or retain a success test proving state changes occur only after forwarding succeeds.
-* [x] Run the smallest relevant test suite, then lint/type checks and the production build.
-* [x] Deploy the verified fix to Vercel production and confirm the live scheduler route remains healthy with the empty Testmail inbox.
-* [x] Run secret hygiene and `git diff --check`, then verify modified files from disk.
+* Confirm the configured Resend key's domain permission without printing the key.
+* Inspect the signed-in Resend domain page for the exact DNS records.
+* Identify the authoritative DNS provider and add only the Resend-provided records if authenticated access is available.
+* Start Resend verification and verify public DNS plus the Resend domain status.
+* Run the corrected repository DNS/email check and require zero failures.
+* Run the Resend readiness check and document the expected send-only-key limitation.
+* Run secret hygiene and disk verification.
 
 ## 4. Result
-* Failed Resend responses and thrown provider errors now leave the application and proxy unchanged for retry.
-* Successful forwarding uses a stable Resend idempotency key before marking the application referred and deactivating the proxy.
-* Four focused retry tests, TypeScript, the production build, secret hygiene, and the live protected poll pass.
-* Production deployment: `dpl_Fj6FXMbXi9u7LtbK8w2q1AQwtsq8`.
+* Name.com and public DNS contain the exact Resend MX, SPF, DKIM, and DMARC records.
+* The public DNS/email readiness check passes with zero failures and zero warnings.
+* Resend logged `DNS verified`; its overall domain status remains `pending` while final verification completes.
+* The send-only Resend API key still cannot read domain status and returns `restricted_api_key` as expected.

@@ -10,6 +10,9 @@ const domain = domainArgIndex >= 0 && args[domainArgIndex + 1]
   : 'referkaro.app'
 
 const expectedVercelApexIp = '76.76.21.21'
+const resendMailFromDomain = `send.${domain}`
+const resendDkimDomain = `resend._domainkey.${domain}`
+const expectedResendMx = 'feedback-smtp.us-east-1.amazonses.com'
 const results = []
 
 function pass(label, detail) {
@@ -121,19 +124,26 @@ async function main() {
     warn('www record', `www.${domain} does not resolve publicly. This is optional if the launch only uses the apex domain.`)
   }
 
-  const mx = await resolveSafe('MX', domain)
-  if (mx.length > 0) {
-    pass('Inbound email MX', `${domain} has ${mx.length} MX record(s).`)
+  const mx = await resolveSafe('MX', resendMailFromDomain)
+  const resendMx = mx.find((record) => (
+    record.exchange.replace(/\.$/, '').toLowerCase() === expectedResendMx
+    && Number(record.priority) === 10
+  ))
+  if (resendMx) {
+    pass('Resend MAIL FROM MX', `${resendMailFromDomain} points to the expected Resend/SES feedback server.`)
   } else {
-    fail('Inbound email MX', `${domain} has no public MX records, so domain mailbox/inbound routing is not ready.`)
+    fail('Resend MAIL FROM MX', `${resendMailFromDomain} is missing the expected priority-10 Resend/SES MX record.`)
   }
 
-  const rootTxt = await resolveSafe('TXT', domain)
-  const spf = rootTxt.find((record) => record.toLowerCase().startsWith('v=spf1'))
+  const mailFromTxt = await resolveSafe('TXT', resendMailFromDomain)
+  const spf = mailFromTxt.find((record) => (
+    record.toLowerCase().startsWith('v=spf1')
+    && record.toLowerCase().includes('include:amazonses.com')
+  ))
   if (spf) {
-    pass('SPF TXT', `${domain} has an SPF record.`)
+    pass('Resend SPF TXT', `${resendMailFromDomain} authorizes Amazon SES.`)
   } else {
-    fail('SPF TXT', `${domain} has no SPF TXT record for sender authentication.`)
+    fail('Resend SPF TXT', `${resendMailFromDomain} has no SPF record authorizing Amazon SES.`)
   }
 
   const dmarcTxt = await resolveSafe('TXT', `_dmarc.${domain}`)
@@ -144,7 +154,13 @@ async function main() {
     fail('DMARC TXT', `_dmarc.${domain} has no DMARC TXT record.`)
   }
 
-  warn('DKIM TXT', 'DKIM selector is provider-specific and cannot be verified until the email provider supplies the selector record(s).')
+  const dkimTxt = await resolveSafe('TXT', resendDkimDomain)
+  const dkim = dkimTxt.find((record) => record.toLowerCase().startsWith('p='))
+  if (dkim) {
+    pass('Resend DKIM TXT', `${resendDkimDomain} publishes the Resend DKIM public key.`)
+  } else {
+    fail('Resend DKIM TXT', `${resendDkimDomain} has no Resend DKIM public key.`)
+  }
 
   for (const result of results) {
     console.log(`[${result.status}] ${result.label}: ${result.detail}`)

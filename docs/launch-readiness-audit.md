@@ -410,5 +410,16 @@ Fix production domain/email consistency in server-side email templates and env d
 
 ## Remaining Launch Gates After Testmail Fix
 - Razorpay still uses a test key; live credentials, webhook verification, and one controlled transaction remain required.
-- Public domain email DNS still lacks MX, SPF, and DMARC records. DKIM cannot be verified until the provider selector is known.
-- The configured Resend key is send-only and returns `restricted_api_key` for domain status; verify the domain in the Resend dashboard or provide a key with domain-read access.
+- A controlled real-message Testmail proxy test remains advisable before launch.
+
+## 2026-07-22 Update - Resend DNS Verification
+- Confirmed Name.com already contained the exact Resend DKIM TXT, MAIL FROM MX, and SPF TXT records for `referkaro.app`.
+- Added `_dmarc.referkaro.app` with `v=DMARC1; p=none;` and verified Name.com saved the record.
+- Verified public DNS resolves the exact Resend DKIM key at `resend._domainkey.referkaro.app`, priority-10 MX and Amazon SES SPF at `send.referkaro.app`, and DMARC at `_dmarc.referkaro.app`.
+- Triggered verification in the signed-in Resend dashboard. Resend logged `DNS verified` on July 22 and changed the overall domain status from `not started` to `pending` while final verification continues.
+- Updated `scripts/check-dns-email.js` to validate the deployed architecture: Resend outbound authentication uses `send.referkaro.app` and `resend._domainkey.referkaro.app`, while Testmail handles inbound proxy mail instead of apex-domain MX.
+- The configured production Resend key remains send-only, so `npm run check:resend-domain -- --env-file .env.vercel.production.local` still returns `HTTP 401 restricted_api_key`; dashboard evidence is authoritative until the key receives domain-read permission.
+
+## Remaining Email Verification Work
+- Wait for Resend's overall domain status to change from `pending` to `verified`.
+- Run one controlled outbound email after verification and one controlled real-message Testmail proxy flow before public launch.
