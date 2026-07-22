@@ -10,11 +10,13 @@ const FORCE_EMAIL_TO = process.env.FORCE_EMAIL_TO || '';
 export async function sendEmail({
     to,
     subject,
-    html
+    html,
+    idempotencyKey
 }: {
     to: string;
     subject: string;
     html: string;
+    idempotencyKey?: string;
 }) {
     if (!process.env.RESEND_API_KEY) {
         console.warn('RESEND_API_KEY is not set. Skipping email.');
@@ -27,15 +29,23 @@ export async function sendEmail({
             ? `[DEV → ${to}] ${subject}`
             : subject;
 
-        const data = await resend.emails.send({
-            from: EMAIL_FROM,
-            to: recipient,
-            subject: emailSubject,
-            html: html
-        });
+        const response = await resend.emails.send(
+            {
+                from: EMAIL_FROM,
+                to: recipient,
+                subject: emailSubject,
+                html: html
+            },
+            idempotencyKey ? { idempotencyKey } : undefined
+        );
 
-        console.log('Email sent successfully:', data);
-        return data;
+        if (response.error) {
+            console.error('Failed to send email:', response.error);
+            return null;
+        }
+
+        console.log('Email sent successfully:', response.data?.id);
+        return response.data;
     } catch (error) {
         console.error('Failed to send email:', error);
         // Don't throw error to prevent blocking the main flow

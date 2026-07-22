@@ -10,6 +10,7 @@
         "build": "next build",
         "start": "next start",
         "lint": "eslint . --ext .ts,.tsx",
+        "test:inbound-email": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/test-inbound-email-retry.mjs",
         "check:launch-env": "node scripts/check-launch-env.js --production",
         "check:dns-email": "node scripts/check-dns-email.js",
         "check:secret-hygiene": "node scripts/check-secret-hygiene.js",

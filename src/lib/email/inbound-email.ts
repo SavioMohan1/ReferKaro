@@ -56,9 +56,18 @@ function renderForwardHtml(email: InboundEmail) {
     `
 }
 
-export async function processInboundProxyEmail(email: InboundEmail): Promise<InboundEmailResult> {
+type InboundEmailDependencies = {
+    supabaseAdmin: ReturnType<typeof createSupabaseAdmin>
+    sendEmail: typeof import('@/lib/resend').sendEmail
+    now?: () => Date
+}
+
+export async function processInboundProxyEmailWithDependencies(
+    email: InboundEmail,
+    dependencies: InboundEmailDependencies
+): Promise<InboundEmailResult> {
     const proxyAddress = extractEmailAddress(email.to)
-    const supabaseAdmin = createSupabaseAdmin()
+    const { supabaseAdmin, sendEmail } = dependencies
 
     const { data: proxyEntry, error: lookupError } = await supabaseAdmin
         .from('proxy_emails')
@@ -90,11 +99,22 @@ export async function processInboundProxyEmail(email: InboundEmail): Promise<Inb
         }
     }
 
+    const result = await sendEmail({
+        to: proxyEntry.real_email,
+        subject: `[ReferKaro Forward] ${email.subject || 'New Message'}`,
+        html: renderForwardHtml(email),
+        idempotencyKey: `referkaro-inbound-${proxyEntry.id}`
+    })
+
+    if (!result) {
+        throw new Error('Failed to forward inbound email')
+    }
+
     const { error: updateError } = await supabaseAdmin
         .from('applications')
         .update({
             status: 'referred',
-            updated_at: new Date().toISOString()
+            updated_at: (dependencies.now?.() || new Date()).toISOString()
         })
         .eq('id', proxyEntry.application_id)
 
@@ -102,26 +122,28 @@ export async function processInboundProxyEmail(email: InboundEmail): Promise<Inb
         throw new Error(`Failed to mark application referred: ${updateError.message}`)
     }
 
-    let forwarded = false
-    try {
-        const { sendEmail } = await import('@/lib/resend')
-        const result = await sendEmail({
-            to: proxyEntry.real_email,
-            subject: `[ReferKaro Forward] ${email.subject || 'New Message'}`,
-            html: renderForwardHtml(email)
-        })
-        forwarded = Boolean(result)
-    } finally {
-        await supabaseAdmin
-            .from('proxy_emails')
-            .update({ is_active: false })
-            .eq('id', proxyEntry.id)
+    const { error: deactivateError } = await supabaseAdmin
+        .from('proxy_emails')
+        .update({ is_active: false })
+        .eq('id', proxyEntry.id)
+
+    if (deactivateError) {
+        throw new Error(`Failed to deactivate proxy email: ${deactivateError.message}`)
     }
 
     return {
         status: 'processed',
         proxyAddress,
         applicationId: proxyEntry.application_id,
-        forwarded
+        forwarded: true
     }
+}
+
+export async function processInboundProxyEmail(email: InboundEmail): Promise<InboundEmailResult> {
+    const { sendEmail } = await import('@/lib/resend')
+
+    return processInboundProxyEmailWithDependencies(email, {
+        supabaseAdmin: createSupabaseAdmin(),
+        sendEmail
+    })
 }

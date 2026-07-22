@@ -369,3 +369,46 @@ Fix production domain/email consistency in server-side email templates and env d
 - The runbook uses dashboard-based secret entry and does not include credential values.
 - It defines verification evidence for Testmail polling, idempotent live Razorpay reconciliation, domain email DNS, final build, and public deployment checks.
 - ReferKaro remains not launch-ready until every runbook exit criterion and `npm run check:launch` gate passes.
+
+## Deferred Until After Production Readiness
+- Evaluate Datadog Pro for Vercel metrics and logs, browser RUM, synthetic monitoring, dashboards, and production alerts.
+- Evaluate Clerk Pro as a staged replacement for Supabase Auth while retaining Supabase database and storage services.
+- Do not start the Clerk migration until launch-critical Testmail, Razorpay, scheduler, and email DNS work is complete because the current schema and RLS policies depend on Supabase UUID identities.
+
+## 2026-07-22 Update - Testmail Production Credential
+- Added `TESTMAIL_API_KEY` to the Vercel Production environment as a sensitive value through secret-safe stdin handling.
+- Corrected the first upload because PowerShell piping added a trailing newline that Testmail rejected; replaced it using redirected process input with no trailing newline.
+- Deployed production as `dpl_oo8DFqx33GugjVpRtvHEkBn25qva` and aliased it to `https://referkaro.app`.
+- Verified the production build completed successfully, including `/api/cron/testmail-inbound`, with Sentry source maps uploaded.
+- Verified all required Vercel production environment-variable names are present.
+- Verified direct Testmail API authentication succeeds for namespace `rnuj6`.
+- Verified an unauthenticated production poll returns HTTP 401.
+- Verified an authenticated production poll returns success with an empty inbox and zero processing errors.
+
+## Remaining Testmail Work
+- Fix forwarding retry behavior before processing real messages so an email-send failure does not permanently mark the application referred and deactivate its proxy.
+- Run a controlled end-to-end test with a real proxy record and uniquely identifiable Testmail message after the retry fix.
+
+## 2026-07-22 Update - Datadog Testmail Scheduler
+- Verified the encrypted Datadog organization API key and Application Key can read, write, and run Workflow Automation resources without printing credential values.
+- Created HTTP connection `e8a07eec-b820-48ad-ba43-3fe018d77d13` (`ReferKaro Production Cron`) with the Vercel `CRON_SECRET` stored as a Datadog `SECRET` token. Connection read-back does not expose the secret.
+- Created and published workflow `de751704-2cfd-439f-ab1d-7a35999a2005` (`ReferKaro Testmail Polling`).
+- Configured the workflow to call `GET https://referkaro.app/api/cron/testmail-inbound` through `com.datadoghq.http.request` every five minutes using `FREQ=MINUTELY;INTERVAL=5`.
+- Verified manual API-triggered instance `1c8d7d9d-3876-4a99-85ea-0f59bab67b1b` succeeded with no error; the matching Vercel production request returned HTTP 200 at `2026-07-22T09:33:47.811Z`.
+- Verified first post-activation scheduled instance `546437ec-5586-43c8-bc4d-a98772075db6` succeeded with no error; the matching Vercel production request returned HTTP 200 at `2026-07-22T09:36:55.842Z`.
+- The scheduler blocker is resolved. Real-message processing remains blocked on the forwarding retry fix and a controlled end-to-end proxy test.
+
+## 2026-07-22 Update - Testmail Forwarding Retry Fix
+- Fixed `src/lib/email/inbound-email.ts` so a failed forward no longer marks the application `referred` or deactivates the proxy.
+- Fixed `src/lib/resend.ts` to treat Resend SDK `{ error }` responses as failures instead of successful result objects.
+- Added a stable per-proxy Resend idempotency key so retries within Resend's 24-hour idempotency window do not send duplicate candidate emails after a database-finalization failure.
+- Added four focused regression tests covering null provider results, thrown provider errors, successful state finalization, and idempotent database retry.
+- Verified `npm run test:inbound-email`, `npx tsc --noEmit`, `npm run build -- --webpack`, and `npm run check:secret-hygiene` pass.
+- Deployed production as `dpl_Fj6FXMbXi9u7LtbK8w2q1AQwtsq8`, aliased to `https://referkaro.app`.
+- Verified the protected production Testmail poll returned HTTP 200 from the new deployment with an empty inbox and zero processing errors.
+- The forwarding retry code blocker is resolved. A controlled real-message proxy test remains advisable before launch.
+
+## Remaining Launch Gates After Testmail Fix
+- Razorpay still uses a test key; live credentials, webhook verification, and one controlled transaction remain required.
+- Public domain email DNS still lacks MX, SPF, and DMARC records. DKIM cannot be verified until the provider selector is known.
+- The configured Resend key is send-only and returns `restricted_api_key` for domain status; verify the domain in the Resend dashboard or provide a key with domain-read access.
