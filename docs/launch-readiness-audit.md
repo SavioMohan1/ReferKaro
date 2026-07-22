@@ -434,5 +434,8 @@ Fix production domain/email consistency in server-side email templates and env d
 - Deployed the fix as `dpl_9RNM9rtZYjtYCnQX9YTJbGrQtpkt`, ready and aliased to `https://referkaro.app`.
 - The idempotent replay still cannot finalize until the existing `sql/production_launch_schema.sql` status-constraint migration is applied to production Supabase. Resend reuses the stable per-proxy key, so replaying after migration will not duplicate the forwarded email within its 24-hour idempotency window.
 
-## Remaining Proxy Test Step
-- Apply the production `applications_status_check` migration so `referred` is allowed, then replay `proxyflowmrw44bzc` and require application status `referred`, proxy inactive, and HTTP 200 from the protected poll.
+## Production Proxy Test Completion
+- Completed: applied the production `applications_status_check` migration so `referred` is allowed.
+- Replayed `proxyflowmrw44bzc` with the stable Resend idempotency key. The protected production poll returned HTTP 200 with `processed: 1`, the application changed to `referred`, and the proxy became inactive.
+- Gmail search returned exactly one message for the unique forwarded subject, confirming the replay completed database finalization without sending a duplicate.
+- Both requested production email tests are now complete.

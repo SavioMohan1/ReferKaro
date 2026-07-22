@@ -23,4 +23,5 @@
 * Proxy test `proxyflowmrw44bzc` reached Testmail, the production forward was accepted by Resend, and Gmail received the uniquely tagged forwarded message.
 * Production finalization exposed two schema mismatches: `applications.updated_at` is absent and the live `applications_status_check` constraint rejects `referred`.
 * Removed the nonessential `updated_at` write, passed tests/build, and deployed `dpl_9RNM9rtZYjtYCnQX9YTJbGrQtpkt`.
-* The proxy record was restored after each failed finalization attempt; the application remains `accepted` and the proxy remains active until the live status constraint migration is applied.
+* After the live status constraint migration, the idempotent replay returned HTTP 200, processed one message, changed the application to `referred`, and deactivated the proxy.
+* Gmail contains exactly one message with the unique forwarded subject, confirming the replay did not create a duplicate.
