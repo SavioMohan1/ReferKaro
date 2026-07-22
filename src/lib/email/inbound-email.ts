@@ -59,7 +59,6 @@ function renderForwardHtml(email: InboundEmail) {
 type InboundEmailDependencies = {
     supabaseAdmin: ReturnType<typeof createSupabaseAdmin>
     sendEmail: typeof import('@/lib/resend').sendEmail
-    now?: () => Date
 }
 
 export async function processInboundProxyEmailWithDependencies(
@@ -112,10 +111,7 @@ export async function processInboundProxyEmailWithDependencies(
 
     const { error: updateError } = await supabaseAdmin
         .from('applications')
-        .update({
-            status: 'referred',
-            updated_at: (dependencies.now?.() || new Date()).toISOString()
-        })
+        .update({ status: 'referred' })
         .eq('id', proxyEntry.application_id)
 
     if (updateError) {

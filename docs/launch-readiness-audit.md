@@ -422,4 +422,17 @@ Fix production domain/email consistency in server-side email templates and env d
 - The configured production Resend key remains send-only, so `npm run check:resend-domain -- --env-file .env.vercel.production.local` still returns `HTTP 401 restricted_api_key`; dashboard evidence is authoritative until the key receives domain-read permission.
 
 ## Remaining Email Verification Work
-- Run one controlled outbound email after verification and one controlled real-message Testmail proxy flow before public launch.
+- Complete database finalization for the controlled Testmail proxy flow after applying the production status-constraint migration.
+
+## 2026-07-22 Update - Production Email Flow Tests
+- Outbound test `outboundmrw437ri` passed end to end: production-domain Resend accepted the message and Testmail received the exact uniquely tagged subject.
+- Proxy test `proxyflowmrw44bzc` reached Testmail, the protected production poll forwarded it through Resend, and Gmail search confirmed the exact uniquely tagged forwarded message arrived in the owner-controlled mailbox.
+- The first production poll then returned HTTP 500 during database finalization. The safety script restored the original proxy address because the application remained `accepted` and the proxy remained active.
+- Direct Supabase diagnostics identified `PGRST204` for the absent `applications.updated_at` column and PostgreSQL `23514` because the live `applications_status_check` constraint rejects `referred`.
+- Removed the nonessential `updated_at` write from the inbound processor and updated its regression expectation.
+- Verified all four inbound-email regression tests, `npx tsc --noEmit`, `npm run build -- --webpack`, and secret hygiene pass without warnings.
+- Deployed the fix as `dpl_9RNM9rtZYjtYCnQX9YTJbGrQtpkt`, ready and aliased to `https://referkaro.app`.
+- The idempotent replay still cannot finalize until the existing `sql/production_launch_schema.sql` status-constraint migration is applied to production Supabase. Resend reuses the stable per-proxy key, so replaying after migration will not duplicate the forwarded email within its 24-hour idempotency window.
+
+## Remaining Proxy Test Step
+- Apply the production `applications_status_check` migration so `referred` is allowed, then replay `proxyflowmrw44bzc` and require application status `referred`, proxy inactive, and HTTP 200 from the protected poll.

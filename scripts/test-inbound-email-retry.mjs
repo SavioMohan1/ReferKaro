@@ -97,8 +97,7 @@ test('marks referred and deactivates the proxy only after forwarding succeeds', 
         sendEmail: async (message) => {
             sends.push(message)
             return { id: 'resend-message-1' }
-        },
-        now: () => new Date('2026-07-22T10:00:00.000Z')
+        }
     })
 
     assert.equal(result.status, 'processed')
@@ -107,7 +106,7 @@ test('marks referred and deactivates the proxy only after forwarding succeeds', 
     assert.deepEqual(admin.updates, [
         {
             table: 'applications',
-            values: { status: 'referred', updated_at: '2026-07-22T10:00:00.000Z' },
+            values: { status: 'referred' },
             column: 'id',
             value: 'application-456'
         },

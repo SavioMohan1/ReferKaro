@@ -1,25 +1,26 @@
-# Plan: Resend Domain Verification
+# Plan: Production Email Flow Verification
 
 ## 1. Files to be Created/Modified
-* `[MODIFY]` `PLAN.md` - Track the Resend DNS verification operation.
-* `[MODIFY]` `scripts/check-dns-email.js` - Validate the Resend sending subdomain and DKIM selector used by the deployed architecture.
-* `[MODIFY]` `docs/launch-readiness-audit.md` - Record only verified DNS and Resend results.
-* No application runtime source files are expected to change.
+* `[MODIFY]` `PLAN.md` - Track the two controlled production email tests and evidence.
+* `[MODIFY]` `src/lib/email/inbound-email.ts` - Stop writing the absent production `applications.updated_at` column during finalization.
+* `[MODIFY]` `scripts/test-inbound-email-retry.mjs` - Keep the success-state regression aligned with the production schema.
+* `[MODIFY]` `docs/launch-readiness-audit.md` - Record only verified, secret-safe test results.
 
 ## 2. Dependencies to be Installed
-* None.
+* None expected. Existing repository scripts, environment configuration, and provider APIs will be used.
 
 ## 3. Test Plan
-* Confirm the configured Resend key's domain permission without printing the key.
-* Inspect the signed-in Resend domain page for the exact DNS records.
-* Identify the authoritative DNS provider and add only the Resend-provided records if authenticated access is available.
-* Start Resend verification and verify public DNS plus the Resend domain status.
-* Run the corrected repository DNS/email check and require zero failures.
-* Run the Resend readiness check and document the expected send-only-key limitation.
-* Run secret hygiene and disk verification.
+* Inspect the outbound Resend helper, Testmail client, proxy schema, and available secret-safe operational scripts.
+* Select a controlled destination that does not expose or unexpectedly contact an unrelated user.
+* Send one uniquely tagged outbound message through production Resend and verify its delivery in Testmail.
+* Select or create a safe active proxy test record, send one uniquely tagged Testmail message to it, and invoke the protected production poll.
+* Verify forwarding evidence, application status transition, proxy deactivation, and retry/idempotency behavior without printing secrets or personal addresses.
+* Run the inbound regression suite, TypeScript, production build, secret hygiene, and disk verification.
+* Deploy the verified fix and replay the same provider message/idempotency key to complete production finalization without duplicate forwarding.
 
 ## 4. Result
-* Name.com and public DNS contain the exact Resend MX, SPF, DKIM, and DMARC records.
-* The public DNS/email readiness check passes with zero failures and zero warnings.
-* Resend now shows the overall domain, DKIM, MAIL FROM MX, and SPF records as `Verified`, with sending enabled.
-* The send-only Resend API key still cannot read domain status and returns `restricted_api_key` as expected; dashboard verification is the authoritative result.
+* Outbound test `outboundmrw437ri` passed: Resend accepted the message and Testmail received the exact subject.
+* Proxy test `proxyflowmrw44bzc` reached Testmail, the production forward was accepted by Resend, and Gmail received the uniquely tagged forwarded message.
+* Production finalization exposed two schema mismatches: `applications.updated_at` is absent and the live `applications_status_check` constraint rejects `referred`.
+* Removed the nonessential `updated_at` write, passed tests/build, and deployed `dpl_9RNM9rtZYjtYCnQX9YTJbGrQtpkt`.
+* The proxy record was restored after each failed finalization attempt; the application remains `accepted` and the proxy remains active until the live status constraint migration is applied.
