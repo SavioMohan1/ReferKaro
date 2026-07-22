@@ -416,10 +416,10 @@ Fix production domain/email consistency in server-side email templates and env d
 - Confirmed Name.com already contained the exact Resend DKIM TXT, MAIL FROM MX, and SPF TXT records for `referkaro.app`.
 - Added `_dmarc.referkaro.app` with `v=DMARC1; p=none;` and verified Name.com saved the record.
 - Verified public DNS resolves the exact Resend DKIM key at `resend._domainkey.referkaro.app`, priority-10 MX and Amazon SES SPF at `send.referkaro.app`, and DMARC at `_dmarc.referkaro.app`.
-- Triggered verification in the signed-in Resend dashboard. Resend logged `DNS verified` on July 22 and changed the overall domain status from `not started` to `pending` while final verification continues.
+- Triggered verification in the signed-in Resend dashboard. Resend logged `DNS verified` and `Domain verified` on July 22.
+- Verified from the Resend dashboard that the overall `referkaro.app` domain status is `Verified`, DKIM is `Verified`, the MAIL FROM MX and SPF TXT records are both `Verified`, and sending is enabled.
 - Updated `scripts/check-dns-email.js` to validate the deployed architecture: Resend outbound authentication uses `send.referkaro.app` and `resend._domainkey.referkaro.app`, while Testmail handles inbound proxy mail instead of apex-domain MX.
 - The configured production Resend key remains send-only, so `npm run check:resend-domain -- --env-file .env.vercel.production.local` still returns `HTTP 401 restricted_api_key`; dashboard evidence is authoritative until the key receives domain-read permission.
 
 ## Remaining Email Verification Work
-- Wait for Resend's overall domain status to change from `pending` to `verified`.
 - Run one controlled outbound email after verification and one controlled real-message Testmail proxy flow before public launch.

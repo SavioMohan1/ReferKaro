@@ -21,5 +21,5 @@
 ## 4. Result
 * Name.com and public DNS contain the exact Resend MX, SPF, DKIM, and DMARC records.
 * The public DNS/email readiness check passes with zero failures and zero warnings.
-* Resend logged `DNS verified`; its overall domain status remains `pending` while final verification completes.
-* The send-only Resend API key still cannot read domain status and returns `restricted_api_key` as expected.
+* Resend now shows the overall domain, DKIM, MAIL FROM MX, and SPF records as `Verified`, with sending enabled.
+* The send-only Resend API key still cannot read domain status and returns `restricted_api_key` as expected; dashboard verification is the authoritative result.
