@@ -33,10 +33,10 @@ export default function ReferralDisclaimerPage() {
                             Employees listing on ReferKaro act in their individual capacities as industry professionals. Referrals are subject to their companies' internal referral guidelines.
                         </p>
                         <ul style={{ paddingLeft: 20, marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <li>An application or payment on ReferKaro guarantees a **human review** of your credentials by a verified employee.</li>
-                            <li>A review **does not guarantee** a referral submission.</li>
-                            <li>A referral submission **does not guarantee** a recruiter screen, phone review, or official interview.</li>
-                            <li>An interview **does not guarantee** a job offer, hiring outcome, or placement.</li>
+                            <li>An application or payment on ReferKaro places your credentials in an employee&apos;s review queue.</li>
+                            <li>A request does not guarantee a review within a particular time or a referral submission.</li>
+                            <li>A referral submission does not guarantee a recruiter screen, phone review, or official interview.</li>
+                            <li>An interview does not guarantee a job offer, hiring outcome, or placement.</li>
                         </ul>
                     </section>
 

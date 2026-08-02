@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { rateLimit, getRequestIdentifier } from '@/lib/rate-limit'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function POST(request: Request) {
     try {
@@ -20,6 +21,11 @@ export async function POST(request: Request) {
 
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const allowedMimeTypes = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
+        if (!allowedMimeTypes.has(file.type) || file.size > 5 * 1024 * 1024) {
+            return NextResponse.json({ error: 'Upload a PDF, JPG, PNG, or WebP file up to 5MB' }, { status: 400 })
         }
 
         // Rate limit: 3 requests per 300 seconds (expensive AI call)
@@ -41,22 +47,15 @@ export async function POST(request: Request) {
         const mimeType = file.type
 
         // NEW: Upload to Supabase Storage
-        const fileExt = file.name.split('.').pop()
-        const filePath = `${user.id}_${Date.now()}.${fileExt}`
+        const fileExt = file.name.split('.').pop()?.toLowerCase() || 'bin'
+        const filePath = `${user.id}/${crypto.randomUUID()}.${fileExt}`
+        const supabaseAdmin = createAdminClient()
 
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabaseAdmin.storage
             .from('verification-documents')
             .upload(filePath, file)
 
-        let documentUrl = null;
-        if (!uploadError) {
-            const { data: { publicUrl } } = supabase.storage
-                .from('verification-documents')
-                .getPublicUrl(filePath)
-            documentUrl = publicUrl
-        } else {
-            console.error("Upload Error:", uploadError)
-        }
+        if (uploadError) return NextResponse.json({ error: 'Verification evidence could not be stored' }, { status: 500 })
 
         // Analyze with Gemini Vision (2.5 Flash)
         const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY!)
@@ -127,7 +126,7 @@ Return ONLY a JSON object:
         console.log(`Verification Logic: Score ${analysis.confidence_score}, AI Valid: ${analysis.is_verified} -> Status: ${status}`)
 
         if (status === 'verified') {
-            await supabase
+            await supabaseAdmin
                 .from('profiles')
                 .update({
                     is_verified: true,
@@ -136,12 +135,12 @@ Return ONLY a JSON object:
                     verification_feedback: analysis.reasoning,
                     full_name: formFullName,
                     company: formCompany,
-                    verification_document_url: documentUrl
+                    verification_document_url: filePath
                 })
                 .eq('id', user.id)
         } else {
             // Pending or Rejected
-            await supabase
+            await supabaseAdmin
                 .from('profiles')
                 .update({
                     is_verified: false, // Not verified yet
@@ -152,7 +151,7 @@ Return ONLY a JSON object:
                     // Yes, helpful for admin comparison.
                     full_name: formFullName,
                     company: formCompany,
-                    verification_document_url: documentUrl
+                    verification_document_url: filePath
                 })
                 .eq('id', user.id)
         }

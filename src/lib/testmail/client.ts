@@ -46,7 +46,18 @@ export async function fetchTestmailInbox() {
         },
         cache: 'no-store'
     })
-    const body = await response.json() as TestmailInbox
+    const contentType = response.headers.get('content-type') || ''
+    const rawBody = await response.text()
+    if (!contentType.includes('application/json')) {
+        throw new Error(`Testmail returned a non-JSON response (HTTP ${response.status})`)
+    }
+
+    let body: TestmailInbox
+    try {
+        body = JSON.parse(rawBody) as TestmailInbox
+    } catch {
+        throw new Error(`Testmail returned invalid JSON (HTTP ${response.status})`)
+    }
 
     if (!response.ok || body.result !== 'success') {
         throw new Error(body.message || `Testmail API failed with HTTP ${response.status}`)

@@ -51,7 +51,7 @@ function checkVercelLink() {
     }
 
     add('PASS', 'Vercel project link', 'linked to project referkaro')
-  } catch (error) {
+  } catch {
     add('FAIL', 'Vercel project link', `could not parse ${projectPath}`)
   }
 }

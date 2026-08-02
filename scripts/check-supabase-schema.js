@@ -36,12 +36,24 @@ const requiredTables = [
   {
     name: 'notifications',
     columns: ['id', 'user_id', 'application_id', 'type', 'title', 'body', 'job_link', 'is_read', 'created_at']
+  },
+  {
+    name: 'resume_ranking_runs',
+    columns: ['id', 'job_id', 'requested_by', 'trigger_kind', 'run_number', 'status', 'model', 'created_at']
+  },
+  {
+    name: 'resume_ranking_results',
+    columns: ['id', 'run_id', 'application_id', 'rank', 'score', 'summary', 'strengths', 'gaps']
+  },
+  {
+    name: 'admin_audit_logs',
+    columns: ['id', 'admin_user_id', 'action', 'resource_type', 'resource_id', 'metadata', 'created_at']
   }
 ]
 
 const requiredBuckets = [
   { id: 'resumes', public: false },
-  { id: 'verification-documents', public: true }
+  { id: 'verification-documents', public: false }
 ]
 
 function parseDotEnv(filePath) {
@@ -119,31 +131,21 @@ async function checkBuckets(supabase, results) {
   }
 }
 
-async function checkSafePoolApply(supabase, results) {
+async function checkAtomicApplicationRpc(supabase, results) {
   const zeroUuid = '00000000-0000-0000-0000-000000000000'
-  const { data, error } = await supabase.rpc('safe_pool_apply', {
+  const { error } = await supabase.rpc('submit_application', {
     p_job_id: zeroUuid,
-    p_job_seeker_id: zeroUuid,
-    p_employee_id: zeroUuid,
     p_cover_letter: 'schema-check-no-write',
-    p_linkedin_url: '',
-    p_portfolio_url: '',
-    p_resume_url: '',
-    p_pool_size: 0,
-    p_current_token_balance: 0
+    p_linkedin_url: null,
+    p_portfolio_url: null,
+    p_resume_url: null
   })
 
-  if (error) {
-    add(results, 'FAIL', 'RPC safe_pool_apply', error.message)
+  if (error && (error.message.includes('unauthorized') || error.message.includes('job_unavailable'))) {
+    add(results, 'PASS', 'RPC submit_application', 'function exists and rejected the no-write probe')
     return
   }
-
-  if (data && data.success === false && data.reason === 'pool_full') {
-    add(results, 'PASS', 'RPC safe_pool_apply', 'function exists and returned no-write pool_full probe')
-    return
-  }
-
-  add(results, 'WARN', 'RPC safe_pool_apply', `unexpected response shape: ${JSON.stringify(data)}`)
+  add(results, 'FAIL', 'RPC submit_application', error?.message || 'unexpected successful no-write probe')
 }
 
 async function main() {
@@ -197,7 +199,7 @@ async function main() {
     await checkTable(supabase, results, table)
   }
   await checkBuckets(supabase, results)
-  await checkSafePoolApply(supabase, results)
+  await checkAtomicApplicationRpc(supabase, results)
 
   printResults(results)
 }

@@ -1,220 +1,63 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { after, NextResponse } from 'next/server'
+import { requireRole } from '@/lib/auth/authorization'
 import { rateLimit, getRequestIdentifier } from '@/lib/rate-limit'
 import { validateCoverLetter, validateOptionalUrl } from '@/lib/validation'
 
 export async function POST(request: Request) {
+    const auth = await requireRole(['job_seeker'])
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const limited = rateLimit(getRequestIdentifier(request, auth.user.id), { limit: 10, windowSeconds: 60 })
+    if (!limited.success) {
+        return NextResponse.json({ error: 'Too many requests. Please try again later.' }, {
+            status: 429,
+            headers: { 'Retry-After': String(limited.resetIn) },
+        })
+    }
+
     try {
-        const supabase = await createClient()
-
-        // Get current user
-        const { data: { user }, error: userError } = await supabase.auth.getUser()
-
-        if (userError || !user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        // Rate limit: 10 requests per 60 seconds
-        const rateLimitResult = rateLimit(
-            getRequestIdentifier(request, user.id),
-            { limit: 10, windowSeconds: 60 }
-        )
-        if (!rateLimitResult.success) {
-            return NextResponse.json(
-                { error: 'Too many requests. Please try again later.' },
-                { status: 429, headers: { 'Retry-After': String(rateLimitResult.resetIn) } }
-            )
-        }
-
-        // Parse request body
         const body = await request.json()
-        const { job_id, employee_id, cover_letter, linkedin_url, portfolio_url, resume_url } = body
-
-        if (!job_id || !employee_id || !cover_letter) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+        const cover = validateCoverLetter(body.cover_letter)
+        const linkedin = validateOptionalUrl(body.linkedin_url, 'LinkedIn URL')
+        const portfolio = validateOptionalUrl(body.portfolio_url, 'Portfolio URL')
+        if (!body.job_id || !cover.valid || !linkedin.valid || !portfolio.valid) {
+            return NextResponse.json({ error: cover.error || linkedin.error || portfolio.error || 'Missing job ID' }, { status: 400 })
         }
 
-        // Input validation
-        const coverLetterResult = validateCoverLetter(cover_letter)
-        if (!coverLetterResult.valid) {
-            return NextResponse.json({ error: coverLetterResult.error }, { status: 400 })
-        }
-
-        const linkedinCheck = validateOptionalUrl(linkedin_url, 'LinkedIn URL')
-        if (!linkedinCheck.valid) {
-            return NextResponse.json({ error: linkedinCheck.error }, { status: 400 })
-        }
-
-        const portfolioCheck = validateOptionalUrl(portfolio_url, 'Portfolio URL')
-        if (!portfolioCheck.valid) {
-            return NextResponse.json({ error: portfolioCheck.error }, { status: 400 })
-        }
-
-        // Step 1: Check user's token balance and role
-        const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('token_balance, role')
-            .eq('id', user.id)
-            .single()
-
-        if (profileError || !profile) {
-            return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
-        }
-
-        if (profile.role !== 'job_seeker') {
-            return NextResponse.json({ error: 'Only job seekers can apply' }, { status: 403 })
-        }
-
-        if (!profile.token_balance || profile.token_balance < 1) {
-            return NextResponse.json({ error: 'Insufficient tokens. Please buy tokens to apply.' }, { status: 400 })
-        }
-
-        // Step 2: Fetch Job Details (referral_type + pool_size)
-        const { data: job, error: jobError } = await supabase
-            .from('jobs')
-            .select('referral_type, pool_size, is_active')
-            .eq('id', job_id)
-            .single()
-
-        if (jobError || !job) {
-            return NextResponse.json({ error: 'Job not found' }, { status: 404 })
-        }
-
-        if (!job.is_active) {
-            return NextResponse.json({ error: 'This job is no longer active.' }, { status: 400 })
-        }
-
-        // Step 3: Check if already applied
-        const { data: existingApplication } = await supabase
-            .from('applications')
-            .select('id')
-            .eq('job_id', job_id)
-            .eq('job_seeker_id', user.id)
-            .single()
-
-        if (existingApplication) {
-            return NextResponse.json({ error: 'You have already applied to this job' }, { status: 400 })
-        }
-
-        // Step 4: If pooling job, call atomic RPC to check pool size and insert
-        if (job.referral_type === 'pooling') {
-            const poolSize = job.pool_size || 10
-
-            const { data: rpcResult, error: rpcError } = await supabase.rpc('safe_pool_apply', {
-                p_job_id: job_id,
-                p_job_seeker_id: user.id,
-                p_employee_id: employee_id,
-                p_cover_letter: cover_letter,
-                p_linkedin_url: linkedin_url || null,
-                p_portfolio_url: portfolio_url || null,
-                p_resume_url: resume_url || null,
-                p_pool_size: poolSize,
-                p_current_token_balance: profile.token_balance,
-            })
-
-            if (rpcError) {
-                console.error('RPC error:', rpcError)
-                return NextResponse.json({ error: 'Failed to submit application' }, { status: 500 })
-            }
-
-            if (!rpcResult || rpcResult.success === false) {
-                const reason = rpcResult?.reason || 'pool_full'
-                if (reason === 'pool_full') {
-                    return NextResponse.json({ error: 'This applicant pool is already full.' }, { status: 400 })
-                }
-                return NextResponse.json({ error: 'Failed to submit application' }, { status: 500 })
-            }
-
-            // RPC succeeded — notify employee (non-blocking)
-            notifyEmployee(supabase, employee_id, job_id, user.email || '')
-
-            return NextResponse.json({
-                success: true,
-                message: 'Application submitted successfully to the pool!'
-            })
-        }
-
-        // Step 5: Non-pooling (single referral) — standard flow
-        // Deduct token (atomic update with optimistic lock)
-        const { data: updateResult, error: tokenError } = await supabase
-            .from('profiles')
-            .update({ token_balance: profile.token_balance - 1 })
-            .eq('id', user.id)
-            .eq('token_balance', profile.token_balance)  // Optimistic lock
-            .select('id')
-            .single()
-
-        if (tokenError || !updateResult) {
-            return NextResponse.json({ error: 'Token deduction failed. Please try again.' }, { status: 409 })
-        }
-
-        // Create application
-        const { data: application, error: applicationError } = await supabase
-            .from('applications')
-            .insert({
-                job_id,
-                job_seeker_id: user.id,
-                employee_id,
-                cover_letter,
-                linkedin_url: linkedin_url || null,
-                portfolio_url: portfolio_url || null,
-                resume_url: resume_url || null,
-                status: 'pending',
-                referral_type: 'single',
-            })
-            .select()
-            .single()
-
-        if (applicationError) {
-            console.error('Application creation error:', applicationError)
-
-            // Rollback: Refund token if application creation failed
-            await supabase
-                .from('profiles')
-                .update({ token_balance: profile.token_balance })
-                .eq('id', user.id)
-
-            return NextResponse.json({ error: 'Failed to create application' }, { status: 500 })
-        }
-
-        // Notify employee (non-blocking)
-        notifyEmployee(supabase, employee_id, job_id, user.email || '')
-
-        return NextResponse.json({
-            success: true,
-            application,
-            message: 'Application submitted successfully!'
+        const { data, error } = await auth.supabase.rpc('submit_application', {
+            p_job_id: body.job_id,
+            p_cover_letter: body.cover_letter,
+            p_linkedin_url: body.linkedin_url || null,
+            p_portfolio_url: body.portfolio_url || null,
+            p_resume_url: body.resume_url || null,
         })
 
-    } catch (error) {
-        console.error('Unexpected error:', error)
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-    }
-}
-
-async function notifyEmployee(supabase: any, employeeId: string, jobId: string, applicantEmail: string) {
-    try {
-        const { data: employee } = await supabase
-            .from('profiles')
-            .select('email, full_name')
-            .eq('id', employeeId)
-            .single()
-
-        if (employee && employee.email) {
-            const { sendEmail } = await import('@/lib/resend')
-            await sendEmail({
-                to: employee.email,
-                subject: `New Application for Job #${jobId}`,
-                html: `
-                    <h1>New Application Received! 🚀</h1>
-                    <p>Hi ${employee.full_name || 'there'},</p>
-                    <p>You have received a new application for your referral opening.</p>
-                    <p><strong>Applicant:</strong> ${applicantEmail}</p>
-                    <a href="${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/dashboard">View Application</a>
-                `
-            })
+        if (error) {
+            const known = ['already_applied', 'pool_full', 'job_unavailable', 'insufficient_tokens', 'invalid_resume_path']
+            const message = known.find((item) => error.message.includes(item))
+            return NextResponse.json({ error: message ? message.replaceAll('_', ' ') : 'Application could not be submitted' }, { status: message ? 400 : 500 })
         }
-    } catch (emailError) {
-        console.error('Email sending failed (non-blocking):', emailError)
+
+        after(async () => {
+            const { sendEmail } = await import('@/lib/resend')
+            const { data: employee } = await auth.admin.from('profiles').select('email, full_name').eq('id', data.employee_id).single()
+            if (employee?.email) {
+                await sendEmail({
+                    to: employee.email,
+                    subject: 'New referral request',
+                    html: `<p>Hi ${employee.full_name || 'there'},</p><p>A candidate submitted a referral request. Review it from your ReferKaro workspace.</p>`,
+                })
+            }
+
+            if (data.pool_filled) {
+                const { rankResumePool } = await import('@/lib/ai/resume-ranking')
+                await rankResumePool({ jobId: body.job_id, requestedBy: data.employee_id, triggerKind: 'automatic' })
+            }
+        })
+
+        return NextResponse.json({ success: true, applicationId: data.application_id, poolFilled: data.pool_filled })
+    } catch (error) {
+        console.error('Application submission failed:', error)
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }

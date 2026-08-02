@@ -35,7 +35,8 @@ const allowRedactedSensitive = args.includes('--allow-redacted-sensitive');
 const redactedSensitiveNames = new Set([
   'RAZORPAY_WEBHOOK_SECRET',
   'WEBHOOK_INBOUND_SECRET',
-  'TESTMAIL_API_KEY'
+  'TESTMAIL_API_KEY',
+  'AZURE_OPENAI_API_KEY'
 ]);
 const results = [];
 
@@ -110,6 +111,9 @@ if (isProductionCheck) {
 }
 
 requirePresent('GOOGLE_GEMINI_API_KEY');
+requireSecret('AZURE_OPENAI_API_KEY');
+requireUrl('AZURE_OPENAI_BASE_URL');
+requirePresent('AZURE_OPENAI_DEPLOYMENT');
 requirePresent('RESEND_API_KEY');
 requireEmail('EMAIL_FROM', 'referkaro.app');
 
@@ -125,7 +129,6 @@ if (isProductionCheck && valueOf('FORCE_EMAIL_TO')) {
   add('pass', 'FORCE_EMAIL_TO', 'empty');
 }
 
-requireEmail('ADMIN_EMAIL', 'referkaro.app');
 
 if (valueOf('PROXY_EMAIL')) requireEmail('PROXY_EMAIL', 'referkaro.app');
 else add('warn', 'PROXY_EMAIL', 'missing; app will fall back to proxy@referkaro.app');

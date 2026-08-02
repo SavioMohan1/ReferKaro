@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { Bell, BellOff, ExternalLink, CheckCheck, Mail, ShieldCheck, AlertCircle, CheckCircle } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { Bell, BellOff, CheckCheck, CircleCheck, ExternalLink, Mail, ShieldCheck, TriangleAlert } from 'lucide-react'
 
 interface Notification {
     id: string
@@ -13,18 +13,18 @@ interface Notification {
     created_at: string
 }
 
-const typeIcon: Record<string, { icon: React.ReactNode; accent: string }> = {
-    accepted:           { icon: <CheckCircle size={16} />, accent: '#00F064' },
-    pooling_accepted:   { icon: <CheckCircle size={16} />, accent: '#00F0FF' },
-    selected:           { icon: <AlertCircle size={16} />, accent: '#FFD700' },
-    rejected:           { icon: <BellOff size={16} />,     accent: '#FF6B6B' },
-    system:             { icon: <Bell size={16} />,        accent: '#A78BFA' },
-    job_approved:       { icon: <ShieldCheck size={16} />, accent: '#00F064' },
-    job_rejected:       { icon: <ShieldCheck size={16} />, accent: '#FF6B6B' },
+const typeIcon: Record<string, React.ReactNode> = {
+    accepted: <CircleCheck size={17} />,
+    pooling_accepted: <CircleCheck size={17} />,
+    selected: <TriangleAlert size={17} />,
+    rejected: <BellOff size={17} />,
+    system: <Bell size={17} />,
+    job_approved: <ShieldCheck size={17} />,
+    job_rejected: <ShieldCheck size={17} />,
 }
 
 function timeAgo(dateStr: string) {
-    const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
+    const diff = Math.max(0, Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000))
     if (diff < 60) return `${diff}s ago`
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
@@ -37,11 +37,12 @@ export default function InboxPanel() {
     const [unreadCount, setUnreadCount] = useState(0)
 
     const fetchNotifications = useCallback(async () => {
-        const res = await fetch('/api/notifications')
-        if (res.ok) {
-            const data = await res.json()
-            setNotifications(data.notifications || [])
-            setUnreadCount((data.notifications || []).filter((n: Notification) => !n.is_read).length)
+        const response = await fetch('/api/notifications')
+        if (response.ok) {
+            const data = await response.json()
+            const nextNotifications = data.notifications || []
+            setNotifications(nextNotifications)
+            setUnreadCount(nextNotifications.filter((notification: Notification) => !notification.is_read).length)
         }
         setLoading(false)
     }, [])
@@ -52,112 +53,51 @@ export default function InboxPanel() {
         await fetch('/api/notifications/read', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ notificationId: id })
+            body: JSON.stringify({ notificationId: id }),
         })
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
-        setUnreadCount(prev => Math.max(0, prev - 1))
+        setNotifications((current) => current.map((notification) => notification.id === id ? { ...notification, is_read: true } : notification))
+        setUnreadCount((current) => Math.max(0, current - 1))
     }
 
     const markAllRead = async () => {
         await fetch('/api/notifications/read', { method: 'PUT' })
-        setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
+        setNotifications((current) => current.map((notification) => ({ ...notification, is_read: true })))
         setUnreadCount(0)
     }
 
-    if (loading) {
-        return (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: '#6B7A99' }}>
-                Loading inbox…
-            </div>
-        )
-    }
-
     return (
-        <div>
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ position: 'relative' }}>
-                        <Mail size={20} color="#00F0FF" />
-                        {unreadCount > 0 && (
-                            <span style={{
-                                position: 'absolute', top: -6, right: -8,
-                                background: '#FF4444', color: '#fff', fontSize: '0.6rem',
-                                fontWeight: 700, borderRadius: 99, padding: '1px 5px', minWidth: 16, textAlign: 'center'
-                            }}>{unreadCount}</span>
-                        )}
-                    </div>
-                    <h3 style={{ color: '#E8EDF5', fontSize: '1rem', fontWeight: 700 }}>
-                        Inbox {unreadCount > 0 && <span style={{ color: '#6B7A99', fontWeight: 400, fontSize: '0.85rem' }}>({unreadCount} unread)</span>}
-                    </h3>
-                </div>
-                {unreadCount > 0 && (
-                    <button onClick={markAllRead} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'transparent', border: 'none', color: '#00F0FF', fontSize: '0.78rem', cursor: 'pointer' }}>
-                        <CheckCheck size={13} /> Mark all read
-                    </button>
-                )}
+        <div className="rk-inbox">
+            <div className="rk-panel-heading">
+                <div><span className="rk-kicker">Updates</span><h2>Inbox {unreadCount > 0 && <small>{unreadCount}</small>}</h2></div>
+                {unreadCount > 0 && <button type="button" onClick={markAllRead}><CheckCheck size={14} /> Mark all read</button>}
             </div>
-
-            {/* Notifications list */}
-            {notifications.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '48px 0', color: '#6B7A99' }}>
-                    <Mail size={36} strokeWidth={1.2} style={{ margin: '0 auto 12px', display: 'block', opacity: 0.4 }} />
-                    <p style={{ fontSize: '0.88rem' }}>Your inbox is empty</p>
-                </div>
+            {loading ? (
+                <div className="rk-inbox-loading"><span /> Loading updates</div>
+            ) : notifications.length === 0 ? (
+                <div className="rk-empty-state rk-empty-state-compact"><Mail size={26} /><h3>Your inbox is clear</h3><p>Application and listing updates will appear here.</p></div>
             ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {notifications.map(n => {
-                        const { icon, accent } = typeIcon[n.type] || typeIcon.system
-                        return (
-                            <div
-                                key={n.id}
-                                onClick={() => !n.is_read && markRead(n.id)}
-                                style={{
-                                    background: n.is_read ? 'rgba(255,255,255,0.02)' : 'rgba(0,240,255,0.05)',
-                                    border: `1px solid ${n.is_read ? 'rgba(255,255,255,0.06)' : 'rgba(0,240,255,0.18)'}`,
-                                    borderRadius: 12,
-                                    padding: '14px 16px',
-                                    cursor: n.is_read ? 'default' : 'pointer',
-                                    transition: 'border-color 0.2s',
-                                    position: 'relative'
-                                }}
-                            >
-                                {/* Unread dot */}
-                                {!n.is_read && (
-                                    <span style={{ position: 'absolute', top: 14, right: 14, width: 7, height: 7, borderRadius: '50%', background: accent }} />
+                <div className="rk-notification-list">
+                    {notifications.map((notification) => (
+                        <article
+                            key={notification.id}
+                            className="rk-notification"
+                            data-read={notification.is_read}
+                            onClick={() => !notification.is_read && markRead(notification.id)}
+                        >
+                            <span className="rk-notification-icon">{typeIcon[notification.type] || typeIcon.system}</span>
+                            <div>
+                                <strong>{notification.title}</strong>
+                                {notification.body && <p>{notification.body}</p>}
+                                {notification.job_link && (
+                                    <a href={notification.job_link} target="_blank" rel="noopener noreferrer" onClick={(event) => event.stopPropagation()}>
+                                        Open job posting <ExternalLink size={12} />
+                                    </a>
                                 )}
-
-                                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                                    {/* Icon */}
-                                    <div style={{ color: accent, marginTop: 2, flexShrink: 0 }}>{icon}</div>
-
-                                    {/* Content */}
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ color: '#E8EDF5', fontSize: '0.88rem', fontWeight: 600, marginBottom: 4 }}>
-                                            {n.title}
-                                        </div>
-                                        {n.body && (
-                                            <div style={{ color: '#8896B3', fontSize: '0.8rem', lineHeight: 1.5, marginBottom: 8 }}>
-                                                {n.body}
-                                            </div>
-                                        )}
-                                        {n.job_link && (
-                                            <a
-                                                href={n.job_link}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                onClick={e => e.stopPropagation()}
-                                                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, color: '#00F0FF', fontSize: '0.78rem', textDecoration: 'none', border: '1px solid rgba(0,240,255,0.25)', padding: '4px 10px', borderRadius: 6, marginBottom: 6 }}
-                                            >
-                                                <ExternalLink size={11} /> Apply to Job Posting
-                                            </a>
-                                        )}
-                                        <div style={{ color: '#4A5568', fontSize: '0.72rem' }}>{timeAgo(n.created_at)}</div>
-                                    </div>
-                                </div>
+                                <time>{timeAgo(notification.created_at)}</time>
                             </div>
-                        )
-                    })}
+                            {!notification.is_read && <span className="rk-unread-dot" aria-label="Unread" />}
+                        </article>
+                    ))}
                 </div>
             )}
         </div>

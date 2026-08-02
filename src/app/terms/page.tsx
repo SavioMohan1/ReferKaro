@@ -35,9 +35,9 @@ export default function TermsPage() {
                             ReferKaro is a <strong>referral-review marketplace</strong>.
                         </p>
                         <ul style={{ paddingLeft: 20, marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <li><strong>Job Seekers</strong> pay tokens for a guaranteed, transparent human review of their profile, resume, and qualifications by a verified employee.</li>
+                            <li><strong>Job Seekers</strong> use tokens to submit their profile, resume, and qualifications to an employee&apos;s review queue.</li>
                             <li><strong>Employees</strong> screen candidates and earn tokens/payouts for providing feedback and submitting referrals according to their best judgment and employer guidelines.</li>
-                            <li style={{ color: '#00F0FF' }}><strong>CRITICAL DISCLAIMER:</strong> ReferKaro guarantees a human review, NOT a referral, interview, job offer, or placement. Referral decisions are entirely up to the employee.</li>
+                            <li><strong>CRITICAL DISCLAIMER:</strong> ReferKaro does not guarantee review timing, a referral, interview, job offer, or placement. Referral decisions are entirely up to the employee.</li>
                         </ul>
                     </section>
 

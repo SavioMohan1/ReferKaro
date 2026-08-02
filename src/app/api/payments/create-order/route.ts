@@ -1,116 +1,53 @@
 import { NextResponse } from 'next/server'
-import Razorpay from 'razorpay'
-import { createClient } from '@/lib/supabase/server'
+import { requireRole } from '@/lib/auth/authorization'
 import { rateLimit, getRequestIdentifier } from '@/lib/rate-limit'
 import { getPlanById } from '@/lib/pricing'
 
-const razorpay = new Razorpay({
-    key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID!,
-    key_secret: process.env.RAZORPAY_KEY_SECRET!,
-})
-
 export async function POST(request: Request) {
+    const auth = await requireRole(['job_seeker'])
+    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const limited = rateLimit(getRequestIdentifier(request, auth.user.id), { limit: 10, windowSeconds: 60 })
+    if (!limited.success) return NextResponse.json({ error: 'Too many requests. Please try again later.' }, { status: 429 })
+
+    const keyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
+    const keySecret = process.env.RAZORPAY_KEY_SECRET
+    if (!keyId || !keySecret) return NextResponse.json({ error: 'Payments are not configured' }, { status: 503 })
+
     try {
-        const supabase = await createClient()
-        const { data: { user } } = await supabase.auth.getUser()
+        const { planId, type = 'token' } = await request.json()
+        if (type !== 'token') return NextResponse.json({ error: 'Only token purchases are supported' }, { status: 400 })
+        const plan = getPlanById(planId)
+        if (!plan || plan.price * 100 < 100) return NextResponse.json({ error: 'Invalid token plan' }, { status: 400 })
 
-        if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        // Rate limit: 10 requests per 60 seconds
-        const rateLimitResult = rateLimit(
-            getRequestIdentifier(request, user.id),
-            { limit: 10, windowSeconds: 60 }
-        )
-        if (!rateLimitResult.success) {
-            return NextResponse.json(
-                { error: 'Too many requests. Please try again later.' },
-                { status: 429, headers: { 'Retry-After': String(rateLimitResult.resetIn) } }
-            )
-        }
-
-        const body = await request.json()
-        const { planId, type = 'token', applicationId = null } = body
-
-        let finalAmount = 0
-        let finalTokens = 0
-
-        if (type === 'success_fee') {
-            if (!applicationId) {
-                return NextResponse.json({ error: 'applicationId is required for success fee payments' }, { status: 400 })
-            }
-
-            // Verify the application exists, belongs to the user, and is in 'selected' state
-            const { data: application, error: appError } = await supabase
-                .from('applications')
-                .select('id, status, job_seeker_id')
-                .eq('id', applicationId)
-                .single()
-
-            if (appError || !application) {
-                return NextResponse.json({ error: 'Application not found' }, { status: 404 })
-            }
-
-            if (application.job_seeker_id !== user.id) {
-                return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-            }
-
-            if (application.status !== 'selected') {
-                return NextResponse.json({ error: `Application is not in payment pending state (current: ${application.status})` }, { status: 400 })
-            }
-
-            finalAmount = 900 // Hardcoded ₹900 required payment
-            finalTokens = 0
-        } else if (type === 'token') {
-            if (!planId) {
-                return NextResponse.json({ error: 'planId is required for token purchase' }, { status: 400 })
-            }
-
-            const plan = getPlanById(planId)
-            if (!plan) {
-                return NextResponse.json({ error: 'Invalid planId' }, { status: 400 })
-            }
-
-            finalAmount = plan.price
-            finalTokens = plan.tokens
-        } else {
-            return NextResponse.json({ error: 'Invalid payment type' }, { status: 400 })
-        }
-
-        // Create Razorpay Order
-        const order = await razorpay.orders.create({
-            amount: finalAmount * 100, // Amount in paise
-            currency: 'INR',
-            receipt: `receipt_${Date.now()}`,
+        const razorpayResponse = await fetch('https://api.razorpay.com/v1/orders', {
+            method: 'POST',
+            headers: {
+                Authorization: `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString('base64')}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ amount: plan.price * 100, currency: 'INR', receipt: `rk_${crypto.randomUUID()}`.slice(0, 40) }),
+            cache: 'no-store',
         })
-
-        // Create Transaction Record in DB
-        const { error: dbError } = await supabase
-            .from('transactions')
-            .insert({
-                user_id: user.id,
-                amount: finalAmount,
-                tokens_added: finalTokens,
-                status: 'pending',
-                razorpay_order_id: order.id,
-                type: type,
-                application_id: applicationId
-            })
-
-        if (dbError) {
-            console.error('Database insertion error:', JSON.stringify(dbError, null, 2))
-            return NextResponse.json({ error: `Failed to create transaction record: ${dbError.message}` }, { status: 500 })
+        const order = await razorpayResponse.json()
+        if (!razorpayResponse.ok) {
+            console.error('Razorpay order creation failed:', razorpayResponse.status, order?.error?.code || 'unknown')
+            return NextResponse.json({ error: razorpayResponse.status === 401 ? 'Payment credentials were rejected by Razorpay' : 'Razorpay could not create the order' }, { status: razorpayResponse.status === 401 ? 503 : 502 })
         }
 
-        return NextResponse.json({
-            orderId: order.id,
-            keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-            amount: finalAmount * 100 // return amount in paise for Razorpay checkout UI compatibility
+        const { error } = await auth.admin.from('transactions').insert({
+            user_id: auth.user.id,
+            amount: plan.price,
+            tokens_added: plan.tokens,
+            status: 'pending',
+            razorpay_order_id: order.id,
+            type: 'token',
         })
+        if (error) throw error
 
+        return NextResponse.json({ orderId: order.id, keyId, amount: order.amount, currency: order.currency })
     } catch (error) {
-        console.error('Error creating order:', error)
+        console.error('Payment order failed:', error)
         return NextResponse.json({ error: 'Error creating order' }, { status: 500 })
     }
 }

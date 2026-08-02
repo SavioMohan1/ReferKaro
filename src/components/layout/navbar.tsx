@@ -1,154 +1,109 @@
 'use client'
 
-import React from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import {
+    Bell,
+    BriefcaseBusiness,
+    CircleUserRound,
+    FilePlus2,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    ShieldCheck,
+    Tickets,
+    UsersRound,
+    X,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { Home, Info, Mail, MessageSquare, LogOut, Menu, X } from 'lucide-react'
 
 interface NavbarProps { profile: any; user?: any }
 
 export default function Navbar({ profile, user }: NavbarProps) {
-    const router = useRouter()
     const pathname = usePathname()
-    const supabase = createClient()
-    const [mobileOpen, setMobileOpen] = React.useState(false)
+    const router = useRouter()
+    const [mobileOpen, setMobileOpen] = useState(false)
 
-    const handleLogout = async () => {
-        await supabase.auth.signOut()
-        router.push('/')
-    }
-
-    const navItems = [
-        { name: 'Dashboard', href: '/dashboard', icon: Home },
-        { name: 'About',      href: '/about',     icon: Info },
-        { name: 'Contact',    href: '/contact',   icon: Mail },
-        { name: 'Feedback',   href: '/feedback',  icon: MessageSquare },
+    const jobSeekerLinks = [
+        { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+        { name: 'Find referrals', href: '/jobs', icon: BriefcaseBusiness },
+        { name: 'Applications', href: '/my-applications', icon: Bell },
+        { name: 'Tokens', href: '/buy-tokens', icon: Tickets },
     ]
 
-    return (
+    const employeeLinks = [
+        { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+        { name: 'Referral requests', href: '/applications', icon: UsersRound },
+        { name: 'New listing', href: '/jobs/create', icon: FilePlus2 },
+        { name: 'Browse', href: '/jobs', icon: BriefcaseBusiness },
+    ]
+
+    const navItems = profile?.role === 'job_seeker' ? jobSeekerLinks : employeeLinks
+    const displayName = profile?.full_name || user?.email || 'Account'
+
+    const handleLogout = async () => {
+        const supabase = createClient()
+        await supabase.auth.signOut()
+        router.push('/')
+        router.refresh()
+    }
+
+    const navigation = (
         <>
-            <header style={{
-                position: 'sticky', top: 0, zIndex: 100,
-                background: 'rgba(5,10,20,0.88)',
-                backdropFilter: 'blur(14px)',
-                borderBottom: '1px solid rgba(0,240,255,0.08)',
-            }}>
-                <div style={{ maxWidth:1200, margin:'0 auto', padding:'12px 24px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                    {/* Logo */}
-                    <Link href="/" style={{ fontFamily:'var(--font-head)', fontSize:'1.1rem', fontWeight:800, textDecoration:'none' }}>
-                        <span style={{ color:'#00F0FF' }}>Refer</span>
-                        <span style={{ color:'#E8EDF5' }}>Karo</span>
-                    </Link>
-
-                    {/* Desktop nav */}
-                    <nav className="desktop-nav" style={{ display:'flex', alignItems:'center', gap:6 }}>
-                        {navItems.map(item => (
-                            <Link key={item.href} href={item.href} style={{
-                                fontSize:'0.85rem',
-                                fontWeight: 500,
-                                padding:'7px 14px',
-                                borderRadius:8,
-                                textDecoration:'none',
-                                color: pathname === item.href ? '#00F0FF' : '#6B7A99',
-                                background: pathname === item.href ? 'rgba(0,240,255,0.07)' : 'transparent',
-                                transition: 'color 0.2s, background 0.2s',
-                                display:'flex', alignItems:'center', gap:6,
-                            }}
-                                onMouseEnter={e => { if (pathname !== item.href) { (e.currentTarget as HTMLElement).style.color = '#E8EDF5'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)' } }}
-                                onMouseLeave={e => { if (pathname !== item.href) { (e.currentTarget as HTMLElement).style.color = '#6B7A99'; (e.currentTarget as HTMLElement).style.background = 'transparent' } }}
-                            >
-                                <item.icon size={14} />
-                                {item.name}
-                            </Link>
-                        ))}
-                        {profile?.role === 'admin' && (
-                            <Link href="/admin" style={{ fontSize:'0.8rem', fontWeight:700, color:'#7B5EFF', background:'rgba(123,94,255,0.1)', border:'1px solid rgba(123,94,255,0.25)', padding:'6px 12px', borderRadius:999, textDecoration:'none' }}>
-                                Admin
-                            </Link>
-                        )}
-                    </nav>
-
-                    {/* Right: profile + logout + mobile toggle */}
-                    <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-                        <div className="desktop-only" style={{ textAlign:'right' }}>
-                            <div style={{ fontSize:'11px', color:'#6B7A99' }}>Welcome back,</div>
-                            <div style={{ fontSize:'13px', color:'#E8EDF5', fontWeight:600 }}>{profile.full_name || user?.email}</div>
-                        </div>
-                        <button onClick={handleLogout} className="dk-btn-ghost desktop-only" style={{ gap:6 }}>
-                            <LogOut size={14} /> Logout
-                        </button>
-                        <button
-                            onClick={() => setMobileOpen(!mobileOpen)}
-                            className="mobile-menu-btn"
-                            style={{ background:'none', border:'none', cursor:'pointer', color:'#6B7A99', padding:6, display:'none' }}
-                        >
-                            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-                        </button>
-                    </div>
-                </div>
-
-                {/* Mobile dropdown menu */}
-                {mobileOpen && (
-                    <div className="mobile-dropdown" style={{
-                        background: 'rgba(5,10,20,0.96)',
-                        borderTop: '1px solid rgba(0,240,255,0.08)',
-                        padding: '16px 24px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 4,
-                    }}>
-                        {navItems.map(item => (
-                            <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)} style={{
-                                fontSize: '0.9rem',
-                                fontWeight: 500,
-                                padding: '10px 14px',
-                                borderRadius: 8,
-                                textDecoration: 'none',
-                                color: pathname === item.href ? '#00F0FF' : '#B0BAD4',
-                                background: pathname === item.href ? 'rgba(0,240,255,0.07)' : 'transparent',
-                                display: 'flex', alignItems: 'center', gap: 10,
-                            }}>
-                                <item.icon size={16} />
-                                {item.name}
-                            </Link>
-                        ))}
-                        {profile?.role === 'admin' && (
-                            <Link href="/admin" onClick={() => setMobileOpen(false)} style={{
-                                fontSize: '0.9rem', fontWeight: 600, color: '#7B5EFF',
-                                padding: '10px 14px', borderRadius: 8, textDecoration: 'none',
-                                display: 'flex', alignItems: 'center', gap: 10,
-                            }}>
-                                Admin Panel
-                            </Link>
-                        )}
-                        <div style={{ height: 1, background: 'rgba(0,240,255,0.08)', margin: '8px 0' }} />
-                        <div style={{ padding: '8px 14px', fontSize: '0.8rem', color: '#6B7A99' }}>
-                            Signed in as <strong style={{ color: '#E8EDF5' }}>{profile.full_name || user?.email}</strong>
-                        </div>
-                        <button onClick={() => { handleLogout(); setMobileOpen(false) }} style={{
-                            background: 'none', border: 'none', cursor: 'pointer',
-                            color: '#EF4444', fontSize: '0.9rem', fontWeight: 500,
-                            padding: '10px 14px', borderRadius: 8, textAlign: 'left',
-                            display: 'flex', alignItems: 'center', gap: 10,
-                        }}>
-                            <LogOut size={16} /> Logout
-                        </button>
-                    </div>
-                )}
-            </header>
-
-            {/* Responsive styles */}
-            <style>{`
-                @media (max-width: 768px) {
-                    .desktop-nav { display: none !important; }
-                    .desktop-only { display: none !important; }
-                    .mobile-menu-btn { display: flex !important; }
-                }
-                @media (min-width: 769px) {
-                    .mobile-dropdown { display: none !important; }
-                }
-            `}</style>
+            {navItems.map(item => (
+                <Link
+                    className="rk-nav-link"
+                    data-active={pathname === item.href}
+                    href={item.href}
+                    key={item.href}
+                    onClick={() => setMobileOpen(false)}
+                >
+                    <item.icon size={15} /> {item.name}
+                </Link>
+            ))}
+            {profile?.role === 'admin' && (
+                <Link className="rk-nav-link" data-active={pathname === '/admin'} href="/admin" onClick={() => setMobileOpen(false)}>
+                    <ShieldCheck size={15} /> Admin
+                </Link>
+            )}
         </>
+    )
+
+    return (
+        <header className="rk-nav">
+            <div className="rk-shell rk-nav-inner">
+                <Link href="/" className="rk-brand" aria-label="ReferKaro home">
+                    <span className="rk-brand-mark">RK</span>
+                    <span>ReferKaro</span>
+                </Link>
+
+                <nav className="rk-nav-links" aria-label="Account navigation">{navigation}</nav>
+
+                <div className="rk-nav-actions">
+                    <div className="rk-user-summary">
+                        <CircleUserRound size={19} />
+                        <span><small>{profile?.role?.replace('_', ' ')}</small>{displayName}</span>
+                    </div>
+                    <button className="rk-button rk-button-ghost rk-signout" onClick={handleLogout}>
+                        <LogOut size={15} /> Sign out
+                    </button>
+                    <button
+                        className="rk-mobile-toggle"
+                        onClick={() => setMobileOpen(open => !open)}
+                        aria-label={mobileOpen ? 'Close navigation' : 'Open navigation'}
+                        aria-expanded={mobileOpen}
+                    >
+                        {mobileOpen ? <X size={19} /> : <Menu size={19} />}
+                    </button>
+                </div>
+            </div>
+
+            <nav className="rk-shell rk-mobile-menu" data-open={mobileOpen} aria-label="Mobile account navigation">
+                <div className="rk-mobile-user">Signed in as <strong>{displayName}</strong></div>
+                {navigation}
+                <button className="rk-nav-link rk-mobile-signout" onClick={handleLogout}><LogOut size={15} /> Sign out</button>
+            </nav>
+        </header>
     )
 }

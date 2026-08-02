@@ -1,13 +1,24 @@
 import type { Metadata } from 'next'
+import { Fraunces, Manrope } from 'next/font/google'
 import './globals.css'
-
-
 import { createClient } from '@/lib/supabase/server'
 import GlobalNavbar from '@/components/layout/global-navbar'
 
+const displayFont = Fraunces({
+    subsets: ['latin'],
+    variable: '--font-display',
+    display: 'swap',
+})
+
+const interfaceFont = Manrope({
+    subsets: ['latin'],
+    variable: '--font-interface',
+    display: 'swap',
+})
+
 export const metadata: Metadata = {
-    title: 'ReferKaro - Get Referred, Not Ignored',
-    description: 'ReferKaro connects job seekers with verified employees who submit real referrals. Skip the ATS black hole.',
+    title: 'ReferKaro | A clearer path to referrals',
+    description: 'A beta platform for job seekers to request referrals and employees to review candidates through a tracked workflow.',
 }
 
 export default async function RootLayout({
@@ -25,10 +36,10 @@ export default async function RootLayout({
     }
 
     return (
-        <html lang="en">
-            <body className="min-h-screen flex flex-col">
+        <html lang="en" className={`${displayFont.variable} ${interfaceFont.variable}`}>
+            <body>
                 <GlobalNavbar user={user} profile={profile} />
-                <main className="flex-1 flex flex-col">
+                <main className="site-main">
                     {children}
                 </main>
             </body>

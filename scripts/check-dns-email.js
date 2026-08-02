@@ -69,7 +69,7 @@ function resolveWithPowerShell(type, name) {
       default:
         throw new Error(`Unsupported DNS record type: ${type}`)
     }
-  } catch (error) {
+  } catch {
     return []
   }
 }

@@ -6,7 +6,7 @@ async function testModel(modelName) {
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: modelName });
-        const result = await model.generateContent("Hello");
+        await model.generateContent("Hello");
         console.log(`PASS: ${modelName}`);
     } catch (error) {
         console.log(`FAIL: ${modelName}`);

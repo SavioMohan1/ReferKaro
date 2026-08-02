@@ -194,7 +194,6 @@ async function testNotifications() {
     // ── 2B: GET /api/notifications — seeker has no notifications yet
     const { status: s1, data: d1 } = await get('/notifications', seeker.session);
     if (s1 === 200 && Array.isArray(d1.notifications)) {
-        const hasNotif = d1.notifications.length > 0;
         info(`Seeker notifications before review: ${d1.notifications.length}`);
         pass('GET /api/notifications returns correctly for seeker');
     } else {

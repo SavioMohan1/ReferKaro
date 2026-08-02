@@ -115,7 +115,7 @@ export default function LegalDisclaimerModal() {
                             As a Job Seeker, you understand that:
                         </p>
                         <ul className="list-disc pl-5 space-y-2">
-                            <li><strong>No Guarantee:</strong> A token payment guarantees that your profile will be <em>reviewed</em> by the employee. It does NOT guarantee an interview, a job offer, or that the referral will be submitted if you are not a fit.</li>
+                            <li><strong>No Guarantee:</strong> A token submits your profile to the employee&apos;s review queue. It does not guarantee review timing, a referral, an interview, a job offer, or placement.</li>
                             <li>Token purchases are non-refundable once used for an application, except when an application is explicitly declined by the employee.</li>
                             <li>You are responsible for the accuracy of the information provided in your profile and resume.</li>
                         </ul>

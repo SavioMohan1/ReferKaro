@@ -1,149 +1,52 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2, CheckCircle2, Zap, Star } from 'lucide-react'
+import { ArrowLeft, Check, CheckCircle2, Loader2 } from 'lucide-react'
 import Script from 'next/script'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { TOKEN_PLANS } from '@/lib/pricing'
 
 export default function BuyTokensPage() {
     const [paymentSuccess, setPaymentSuccess] = useState(false)
     const [addedTokens, setAddedTokens] = useState(0)
     const [loading, setLoading] = useState<string | null>(null)
+    const [error, setError] = useState('')
     const router = useRouter()
 
     const handlePurchase = async (plan: typeof TOKEN_PLANS[number]) => {
-        setLoading(plan.id)
+        setLoading(plan.id); setError('')
         try {
-            const response = await fetch('/api/payments/create-order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ planId: plan.id }),
-            })
+            const response = await fetch('/api/payments/create-order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ planId: plan.id }) })
             const data = await response.json()
             if (!response.ok) throw new Error(data.error)
-
-            const options = {
-                key: data.keyId, amount: data.amount, currency: 'INR',
-                name: 'ReferKaro', description: `Purchase ${plan.tokens} Tokens`,
-                order_id: data.orderId,
-                handler: async (response: any) => {
-                    const verifyRes = await fetch('/api/payments/verify', {
+            const razorpay = new (window as any).Razorpay({
+                key: data.keyId, amount: data.amount, currency: 'INR', name: 'ReferKaro',
+                description: `Purchase ${plan.tokens} Tokens`, order_id: data.orderId,
+                handler: async (result: any) => {
+                    const verifyResponse = await fetch('/api/payments/verify', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_signature: response.razorpay_signature,
-                        }),
+                        body: JSON.stringify({ razorpay_order_id: result.razorpay_order_id, razorpay_payment_id: result.razorpay_payment_id, razorpay_signature: result.razorpay_signature }),
                     })
-                    const verifyData = await verifyRes.json()
-                    if (verifyData.success) { setAddedTokens(plan.tokens); setPaymentSuccess(true); router.refresh() }
-                    else alert('Payment Verification Failed')
+                    const verifyData = await verifyResponse.json()
+                    if (!verifyData.success) { setError('Payment verification failed. Tokens were not added.'); setLoading(null); return }
+                    setAddedTokens(plan.tokens); setPaymentSuccess(true); setLoading(null); router.refresh()
                 },
-                prefill: { name:'', email:'', contact:'' },
-                theme: { color:'#00F0FF' },
-            }
-            const rzp1 = new (window as any).Razorpay(options)
-            rzp1.open()
-        } catch (error) {
-            console.error('Purchase failed:', error)
-            alert('Something went wrong. Please try again.')
-        } finally {
-            setLoading(null)
-        }
+                modal: { ondismiss: () => setLoading(null) },
+                theme: { color: '#1f6655' },
+            })
+            razorpay.on('payment.failed', () => { setError('The payment failed. Tokens were not added.'); setLoading(null) })
+            razorpay.open()
+        } catch (purchaseError) { setError(purchaseError instanceof Error ? purchaseError.message : 'The purchase could not be started.'); setLoading(null) }
     }
 
-    if (paymentSuccess) {
-        return (
-            <div style={{ minHeight:'80vh', display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
-                <div className="dk-card" style={{ maxWidth:420, width:'100%', padding:'48px 36px', textAlign:'center' }}>
-                    <div style={{ width:72,height:72,borderRadius:'50%',background:'rgba(34,197,94,0.12)',border:'1px solid rgba(34,197,94,0.25)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 20px' }}>
-                        <CheckCircle2 size={36} color="#22C55E" />
-                    </div>
-                    <h2 style={{ fontFamily:'var(--font-head)', fontSize:'1.5rem', color:'#22C55E', marginBottom:8 }}>
-                        Payment Successful!
-                    </h2>
-                    <p style={{ color:'#6B7A99', marginBottom:28 }}>
-                        <strong style={{ color:'#E8EDF5' }}>{addedTokens} Tokens</strong> have been added to your wallet. You're ready to apply!
-                    </p>
-                    <button className="dk-btn-primary" onClick={() => router.push('/dashboard')} style={{ width:'100%', justifyContent:'center' }}>
-                        Go to Dashboard →
-                    </button>
-                </div>
-            </div>
-        )
-    }
+    if (paymentSuccess) return <main className="rk-product-page"><div className="rk-purchase-success"><CheckCircle2 size={34} /><span className="rk-kicker">Payment verified</span><h1>{addedTokens} tokens<br />added.</h1><p>Your updated balance is ready for referral requests.</p><button type="button" className="rk-button rk-button-primary" onClick={() => router.push('/dashboard')}>Return to workspace</button></div></main>
 
-    return (
-        <div className="page-wrapper" style={{ paddingTop:80, paddingBottom:80, position:'relative', overflow:'hidden' }}>
-            <Script src="https://checkout.razorpay.com/v1/checkout.js" />
-            <div className="glow-orb glow-cyan"   style={{ width:380, height:380, top:-60, right:-60, opacity:0.4 }} />
-            <div className="glow-orb glow-violet"  style={{ width:320, height:320, bottom:-60, left:-60, opacity:0.35 }} />
-
-            <div className="page-container" style={{ maxWidth:780, position:'relative', zIndex:1 }}>
-                <div style={{ textAlign:'center', marginBottom:48 }}>
-                    <span className="dk-chip" style={{ marginBottom:14, display:'inline-block' }}>Token Store</span>
-                    <h1 style={{ fontFamily:'var(--font-head)', fontSize:'clamp(1.7rem,4vw,2.6rem)', color:'#E8EDF5', marginBottom:10 }}>
-                        Buy Tokens
-                    </h1>
-                    <p style={{ color:'#6B7A99', fontSize:'0.95rem' }}>
-                        Invest in your career. Every token is a guaranteed human review.
-                    </p>
-                </div>
-
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))', gap:24 }}>
-                    {TOKEN_PLANS.map(plan => (
-                        <div
-                            key={plan.id}
-                            className="dk-card"
-                            style={{
-                                padding:'36px 32px', position:'relative', overflow:'hidden',
-                                border: plan.popular ? '1px solid rgba(0,240,255,0.45)' : undefined,
-                                boxShadow: plan.popular ? '0 0 36px rgba(0,240,255,0.12)' : undefined,
-                                transform: plan.popular ? 'scale(1.03)' : undefined,
-                            }}
-                        >
-                            {plan.popular && (
-                                <div style={{
-                                    position:'absolute', top:16, right:16,
-                                    background:'rgba(0,240,255,0.12)', color:'#00F0FF',
-                                    fontSize:10, fontWeight:700, letterSpacing:'0.08em',
-                                    padding:'4px 10px', borderRadius:999,
-                                    border:'1px solid rgba(0,240,255,0.25)',
-                                }}>★ BEST VALUE</div>
-                            )}
-                            <div style={{ width:44, height:44, borderRadius:10, background:'rgba(0,240,255,0.08)', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:20 }}>
-                                {plan.popular ? <Star size={22} color="#00F0FF" /> : <Zap size={22} color="#00F0FF" />}
-                            </div>
-                            <div style={{ fontFamily:'var(--font-head)', fontSize:'0.85rem', fontWeight:700, color:'#6B7A99', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:8 }}>{plan.name}</div>
-                            <div style={{ fontFamily:'var(--font-head)', fontSize:'2.4rem', fontWeight:800, color:'#E8EDF5', marginBottom:4 }}>₹{plan.price}</div>
-                            <div style={{ fontSize:'0.8rem', color:'#6B7A99', marginBottom:4 }}>one-time payment</div>
-                            <p style={{ fontSize:'0.875rem', color:'#6B7A99', marginBottom:24, lineHeight:1.6 }}>{plan.description}</p>
-
-                            <ul style={{ listStyle:'none', padding:0, margin:'0 0 28px' }}>
-                                {[`${plan.tokens} Tokens`, `${plan.tokens} Application Slots`, 'Direct employee connection', 'Email status tracking'].map(f => (
-                                    <li key={f} style={{ fontSize:'0.875rem', color:'#6B7A99', padding:'7px 0', display:'flex', alignItems:'center', gap:10, borderBottom:'1px solid rgba(0,240,255,0.06)' }}>
-                                        <span style={{ color:'#00F0FF' }}>✓</span> {f}
-                                    </li>
-                                ))}
-                            </ul>
-
-                            <button
-                                className={plan.popular ? 'dk-btn-primary' : 'dk-btn-outline'}
-                                style={{ width:'100%', justifyContent:'center', padding:'13px 24px' }}
-                                onClick={() => handlePurchase(plan)}
-                                disabled={!!loading}
-                            >
-                                {loading === plan.id ? <><Loader2 size={15} style={{ animation:'spin 1s linear infinite' }} /> Processing...</> : 'Buy Now'}
-                            </button>
-                        </div>
-                    ))}
-                </div>
-
-                <p style={{ textAlign:'center', color:'#6B7A99', fontSize:'0.8rem', marginTop:32 }}>
-                    Secured by Razorpay · Tokens never expire · Refund policy applies
-                </p>
-            </div>
-        </div>
-    )
+    return <main className="rk-product-page"><Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" /><div className="rk-shell rk-token-page">
+        <Link href="/dashboard" className="rk-back-link"><ArrowLeft size={14} /> Workspace</Link>
+        <header className="rk-listing-header"><div><span className="rk-kicker">Token store</span><h1>Choose how many<br />requests to make.</h1></div><div className="rk-listing-intro"><p>A token is used when you submit a referral request. Prices and quantities below come from the current product configuration.</p><strong>Payments are processed by Razorpay.</strong></div></header>
+        {error && <div className="rk-form-error" role="alert">{error}</div>}
+        <section className="rk-token-grid">{TOKEN_PLANS.map((plan) => <article key={plan.id} className="rk-token-card" data-featured={plan.popular}><div><span>{plan.popular ? 'Popular option' : 'Token pack'}</span><strong>{plan.tokens}</strong><small>tokens</small></div><div><h2>{plan.name}</h2><p>{plan.description}</p><ul><li><Check size={14} /> {plan.tokens} referral request slots</li><li><Check size={14} /> One-time Razorpay payment</li><li><Check size={14} /> Balance updates after signature verification</li></ul><button type="button" onClick={() => handlePurchase(plan)} disabled={!!loading} className="rk-button rk-button-primary">{loading === plan.id ? <><Loader2 size={15} className="rk-spinner" /> Opening checkout</> : `Buy for ₹${plan.price}`}</button></div></article>)}</section>
+        <p className="rk-payment-footnote">Payment completion is subject to verification. See the refund policy for applicable terms.</p>
+    </div></main>
 }

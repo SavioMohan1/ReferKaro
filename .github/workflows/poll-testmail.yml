@@ -1,0 +1,29 @@
+name: Poll Testmail proxy inbox
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: poll-testmail-proxy-inbox
+  cancel-in-progress: false
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Process new proxy messages
+        env:
+          CRON_SECRET: ${{ secrets.REFERKARO_CRON_SECRET }}
+        run: |
+          test -n "$CRON_SECRET"
+          curl --fail-with-body --silent --show-error \
+            --retry 2 \
+            --max-time 60 \
+            --header "Authorization: Bearer $CRON_SECRET" \
+            https://referkaro.app/api/cron/testmail-inbound

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -9,14 +9,12 @@ const emailFrom = process.env.EMAIL_FROM || 'ReferKaro <notifications@referkaro.
 export async function GET(request: Request) {
     // 1. Authorization Check (Vercel Cron Secret)
     const authHeader = request.headers.get('authorization')
-    if (process.env.NODE_ENV === 'production') {
-        if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-        }
+    if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     try {
-        const supabase = await createClient()
+        const supabase = createAdminClient()
 
         // 2. Find applications that are 'selected' and > 24 hours old
         const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()

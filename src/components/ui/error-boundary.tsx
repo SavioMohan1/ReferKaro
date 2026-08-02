@@ -60,7 +60,7 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
                                 borderRadius: 8,
                                 background: 'rgba(0,240,255,0.1)',
                                 border: '1px solid rgba(0,240,255,0.3)',
-                                color: '#00F0FF',
+                                color: 'var(--forest)',
                                 cursor: 'pointer',
                                 fontSize: '0.875rem',
                                 fontWeight: 500,

@@ -1,44 +1,21 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
-
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || ""
+import { requireRole } from '@/lib/auth/authorization'
 
 export async function DELETE(request: Request) {
-    try {
-        const { searchParams } = new URL(request.url)
-        const targetUserId = searchParams.get('userId')
+    const auth = await requireRole(['admin'])
+    if (!auth) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-        if (!targetUserId) {
-            return NextResponse.json({ error: 'Missing userId' }, { status: 400 })
-        }
+    const targetUserId = new URL(request.url).searchParams.get('userId')
+    if (!targetUserId || targetUserId === auth.user.id) return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 })
 
-        // 1. Verify the requester is the Admin
-        const supabase = await createClient()
-        const { data: { user } } = await supabase.auth.getUser()
+    const { error } = await auth.admin.auth.admin.deleteUser(targetUserId)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-        if (!user || user.email !== ADMIN_EMAIL) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-        }
-
-        // 2. Initialize Supabase with Service Role Key (Admin Access)
-        const supabaseAdmin = createSupabaseClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        )
-
-        // 3. Delete the user from Auth (This will cascade to profiles if DB is set up that way, otherwise we might need to delete profile manually too)
-        const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(targetUserId)
-
-        if (deleteAuthError) {
-            console.error("Error deleting user from Auth:", deleteAuthError)
-            return NextResponse.json({ error: deleteAuthError.message }, { status: 500 })
-        }
-
-        return NextResponse.json({ success: true, message: 'User deleted successfully' })
-
-    } catch (error: any) {
-        console.error('Delete User Route Error:', error)
-        return NextResponse.json({ error: error.message || 'Failed to delete user' }, { status: 500 })
-    }
+    await auth.admin.from('admin_audit_logs').insert({
+        admin_user_id: auth.user.id,
+        action: 'delete',
+        resource_type: 'user',
+        resource_id: targetUserId,
+    })
+    return NextResponse.json({ success: true })
 }

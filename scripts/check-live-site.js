@@ -9,7 +9,7 @@ const pages = [
   { path: '/', marker: 'ReferKaro' },
   { path: '/about', marker: 'ReferKaro' },
   { path: '/jobs', marker: 'ReferKaro' },
-  { path: '/contact', marker: 'Get In Touch' },
+  { path: '/contact', marker: 'Tell us what' },
   { path: '/login', marker: 'ReferKaro' },
   { path: '/privacy', marker: 'ReferKaro' },
   { path: '/terms', marker: 'ReferKaro' }
