@@ -1,9 +1,13 @@
 # ReferKaro Project Status
 
-**Last updated:** 2026-09-22  
-**Canonical production URL:** https://referkaro.app  
-**Repository branch:** `main`  
-**Latest verified revision:** `842e15e` (`a2df531` contains the latest referral verification and review-flow implementation)  
+**Last updated:** 2026-09-22
+
+**Canonical production URL:** https://referkaro.app
+
+**Repository branch:** `main`
+
+**Latest verified revision:** `842e15e` (`a2df531` contains the latest referral verification and review-flow implementation)
+
 **Overall status:** Deployed beta. Core referral workflows exist, but the product is not yet production-launch ready because payment activation and several final compliance/security checks remain open.
 
 This is the canonical cross-agent handoff file. Older audit documents remain useful evidence, but their point-in-time status may be stale.
