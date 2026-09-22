@@ -36,7 +36,7 @@ export default async function RootLayout({
     }
 
     return (
-        <html lang="en" className={`${displayFont.variable} ${interfaceFont.variable}`}>
+        <html lang="en" className={`${displayFont.variable} ${interfaceFont.variable}`} data-scroll-behavior="smooth">
             <body>
                 <GlobalNavbar user={user} profile={profile} />
                 <main className="site-main">
