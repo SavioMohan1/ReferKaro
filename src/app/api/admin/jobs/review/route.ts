@@ -7,7 +7,7 @@ export async function GET() {
 
     const [{ data: jobs, error: jobsError }, { data: profiles, error: profilesError }] = await Promise.all([
         auth.admin.from('jobs').select('*, employee:profiles!employee_id(full_name, email)').order('created_at', { ascending: false }),
-        auth.admin.from('profiles').select('id, full_name, email, company, verification_status, verification_score, verification_feedback, verification_document_url').eq('role', 'employee').eq('verification_status', 'pending').order('updated_at', { ascending: true }),
+        auth.admin.from('profiles').select('id, full_name, email, work_email, work_email_verified_at, company, designation, verification_status, ai_verification_status, admin_verification_status, verification_score, verification_feedback, verification_document_url, manual_review_requested_at').eq('role', 'employee').eq('verification_status', 'pending').order('updated_at', { ascending: true }),
     ])
     if (jobsError || profilesError) return NextResponse.json({ error: 'Admin queue could not be loaded' }, { status: 500 })
 
@@ -32,6 +32,7 @@ export async function POST(request: Request) {
         if (resourceType === 'employment') {
             const { error } = await auth.admin.from('profiles').update({
                 verification_status: action === 'approved' ? 'verified' : 'rejected',
+                admin_verification_status: action === 'approved' ? 'verified' : 'rejected',
                 is_verified: action === 'approved',
                 verification_feedback: feedback?.trim() || null,
             }).eq('id', id).eq('role', 'employee')

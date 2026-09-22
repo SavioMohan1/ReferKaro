@@ -1,72 +1,22 @@
+import Link from 'next/link'
+
+const sections = [
+    ['1. Scope and controller', <>This policy explains how the ReferKaro beta web platform handles digital personal data. ReferKaro determines why and how the platform data described below is processed. A separate incorporated legal-entity name and postal grievance address were <strong>not found in the repository</strong>; until published, privacy requests may be sent to the email below.</>],
+    ['2. Data we collect', <><ul><li>Account and profile data: name, sign-in email, account role, company, designation, profile links, and authentication identifiers.</li><li>Employment verification: work email, OTP verification events, uploaded ID or employment evidence, AI confidence output, and admin decisions.</li><li>Marketplace data: job listings, official job URLs, applications, resumes, cover notes, review decisions, referral addresses, and communications.</li><li>Payments and records: token ledger entries, provider order/payment references, refunds, and audit records. ReferKaro does not store full card or bank credentials.</li><li>Technical and safety data: IP-derived request identifiers, timestamps, device/browser logs, security events, errors, and consent records.</li></ul></>],
+    ['3. Purposes and legal grounds', <>We use data to create and secure accounts; verify work-email control and employment evidence; publish admin-approved listings; route applications and referrals; rank resume pools when an authorised employee requests it; process token payments; prevent fraud and abuse; troubleshoot the service; respond to rights requests; and meet legal obligations. Where consent is the applicable ground, it may be withdrawn as described below. Some records may still be retained where another lawful requirement applies.</>],
+    ['4. AI and human review', <>Employment evidence may be analysed by an AI service to compare claimed name and company details. Resume ranking may assist an employee with a candidate pool. These outputs are recommendations, not employment decisions. Employment status and job publication remain subject to admin review, and candidates are reviewed by the referring employee or employer. Users may request manual employment review when automated verification is unsuccessful.</>],
+    ['5. Sharing and processors', <>Data is shared only as needed with the user receiving a referral request and with service providers supporting hosting, authentication, database/storage, transactional email, monitoring, AI analysis, and payments. Current repository integrations include Vercel, Supabase, Resend, Google Gemini, Azure OpenAI, Razorpay, and Sentry. Provider use can vary by feature and environment. We may also disclose information when legally required or to protect users and the service.</>],
+    ['6. Storage, transfers, and security', <>Private resumes and verification documents are stored in access-controlled storage and served using short-lived signed links. Server-only credentials, role checks, row-level security, rate limits, audit logs, and encrypted transport are used as safeguards. Some processors may handle data outside India subject to their contractual and security arrangements and any government restrictions. No internet service can promise absolute security.</>],
+    ['7. Retention', <>We keep data only while needed for the stated purpose, an active account or transaction, dispute handling, fraud prevention, or a legal requirement. OTP challenges expire after 10 minutes, although limited security metadata may remain temporarily. Signed document links expire quickly. Exact retention schedules for every record category are <strong>not found in the repository</strong>; ReferKaro must approve and publish a production retention schedule before general availability.</>],
+    ['8. Your choices and rights', <>You may request access to a summary of your personal data, correction or completion, erasure where applicable, consent withdrawal, grievance resolution, and nomination of another person as allowed by applicable law. You may also request human review of employment verification. Send requests from your registered email to <a href="mailto:support@referkaro.app">support@referkaro.app</a>. We may verify identity before acting. Withdrawing necessary processing may require account closure or prevent a feature from operating.</>],
+    ['9. Children', <>ReferKaro is designed for job seekers and working professionals aged 18 or older. Do not use the service or submit another person&apos;s data if you are under 18. If we learn that a child&apos;s data was submitted, we will restrict processing and assess deletion and any legally required guardian steps.</>],
+    ['10. Breaches and complaints', <>We maintain an incident-response process and will notify affected users and competent authorities when applicable law requires it. Raise a privacy grievance first at <a href="mailto:support@referkaro.app">support@referkaro.app</a>. The Digital Personal Data Protection Board of India has been established; statutory complaint routes apply according to the phased commencement of the Act and Rules.</>],
+    ['11. Changes', <>Material changes will be dated and presented for acknowledgement when appropriate. The in-product consent record stores the policy version accepted by each signed-in user.</>],
+] as const
+
 export default function PrivacyPage() {
-    return (
-        <div className="page-wrapper" style={{
-            paddingTop: '80px', position: 'relative', overflow: 'hidden',
-        }}>
-            <div className="glow-orb glow-cyan" style={{ width:500, height:500, top:-100, right:-100, opacity:0.3 }} />
-            <div className="glow-orb glow-violet" style={{ width:400, height:400, bottom:-100, left:-80, opacity:0.2 }} />
-
-            <div className="page-container" style={{ paddingBottom: 80, position:'relative', zIndex:1, maxWidth: 800 }}>
-                {/* Header */}
-                <div style={{ marginBottom: 40 }}>
-                    <span className="dk-chip" style={{ marginBottom: 16, display: 'inline-block' }}>Legal Policy</span>
-                    <h1 style={{ fontFamily: 'var(--font-head)', fontSize: 'clamp(2rem, 5vw, 3rem)', fontWeight: 700, color: '#E8EDF5', marginBottom: 16 }}>
-                        Privacy Policy
-                    </h1>
-                    <p style={{ color: '#6B7A99', fontSize: '0.9rem' }}>
-                        Last Updated: June 11, 2026
-                    </p>
-                </div>
-
-                {/* Content */}
-                <div style={{ color: '#B3C0D9', fontSize: '0.975rem', lineHeight: 1.8, display: 'flex', flexDirection: 'column', gap: 28 }}>
-                    <section>
-                        <h2 style={{ color: '#E8EDF5', fontFamily: 'var(--font-head)', fontSize: '1.4rem', marginBottom: 12 }}>1. Information We Collect</h2>
-                        <p>
-                            We collect information you provide directly to us when creating an account, posting reviews, or submitting applications:
-                        </p>
-                        <ul style={{ paddingLeft: 20, marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <li><strong>Job Seekers:</strong> Name, email address, role, resume files, LinkedIn URL, portfolio URL, cover letters, and application history.</li>
-                            <li><strong>Employees:</strong> Name, work email address, company details, job postings, and verification proof files.</li>
-                            <li><strong>Transaction Data:</strong> Razorpay order and payment IDs, token ledger data, and purchase history.</li>
-                        </ul>
-                    </section>
-
-                    <section>
-                        <h2 style={{ color: '#E8EDF5', fontFamily: 'var(--font-head)', fontSize: '1.4rem', marginBottom: 12 }}>2. How We Use Your Information</h2>
-                        <p>
-                            We process collected data to operate the marketplace safely:
-                        </p>
-                        <ul style={{ paddingLeft: 20, marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                            <li>To authenticate accounts via Google OAuth.</li>
-                            <li>To share resumes and application metadata with verified employees whose listings you apply to.</li>
-                            <li>To process token purchases securely through Razorpay.</li>
-                            <li>To verify employment status using official work domains.</li>
-                            <li>To audit token transactions and detect fraudulent activity.</li>
-                        </ul>
-                    </section>
-
-                    <section>
-                        <h2 style={{ color: '#E8EDF5', fontFamily: 'var(--font-head)', fontSize: '1.4rem', marginBottom: 12 }}>3. Resume Security & Signed URLs</h2>
-                        <p>
-                            We value candidate privacy. Resumes uploaded to the Platform are saved in private Supabase storage buckets. Employees and candidates access them through securely signed, expiring URLs. Unauthorized users cannot browse or search public resumes.
-                        </p>
-                    </section>
-
-                    <section>
-                        <h2 style={{ color: '#E8EDF5', fontFamily: 'var(--font-head)', fontSize: '1.4rem', marginBottom: 12 }}>4. Data Deletion and Deletion Requests</h2>
-                        <p>
-                            You have the right to request deletion of your account and personal data. To trigger a data deletion request or export your profile history, please email us directly.
-                        </p>
-                    </section>
-
-                    <section style={{ borderTop: '1px solid rgba(0,240,255,0.08)', paddingTop: 24 }}>
-                        <p>
-                            If you have questions about this Policy or our data security practices, contact us at <a href="mailto:support@referkaro.app" style={{ color: '#00F0FF' }}>support@referkaro.app</a>.
-                        </p>
-                    </section>
-                </div>
-            </div>
-        </div>
-    )
+    return <main className="rk-legal-page"><div className="rk-shell rk-policy-layout">
+        <header><span className="rk-kicker">Legal policy</span><h1>Privacy, in plain language.</h1><p>Effective: 22 September 2026 · Version 2026-09-22</p><div><Link href="/data-protection">DPDP Notice</Link><Link href="/terms">Terms of Use</Link></div></header>
+        <article>{sections.map(([title, content]) => <section key={title}><h2>{title}</h2><div>{content}</div></section>)}<section><h2>12. Contact</h2><p>Privacy and grievance contact: <a href="mailto:support@referkaro.app">support@referkaro.app</a>. A named Data Protection Officer is not stated because designation as a Significant Data Fiduciary was <strong>not found in the repository</strong>.</p></section></article>
+    </div></main>
 }

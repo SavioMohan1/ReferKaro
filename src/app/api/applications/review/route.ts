@@ -3,7 +3,7 @@ import { requireRole } from '@/lib/auth/authorization'
 import { createProxyAddress } from '@/lib/proxy-email'
 
 export async function POST(request: Request) {
-    const auth = await requireRole(['employee'])
+    const auth = await requireRole(['employee', 'admin'])
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     try {

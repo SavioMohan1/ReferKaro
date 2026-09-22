@@ -968,6 +968,8 @@ select:focus {
 .rk-choice-grid button svg { color: var(--forest); }
 .rk-choice-grid button strong { font-size: 0.82rem; }
 .rk-choice-grid button span { color: var(--ink-soft); font-size: 0.7rem; }
+.rk-choice-grid button small { color: var(--rust); font-size: 0.64rem; line-height: 1.45; }
+.rk-field input[readonly] { background: #eeeae0; color: var(--ink-soft); cursor: not-allowed; }
 .rk-create-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; padding: 22px 0; }
 .rk-create-actions p { margin: 0 auto 0 0; color: var(--ink-faint); font-size: 0.7rem; }
 .rk-verify-layout { display: grid; grid-template-columns: 1.05fr 0.95fr; min-height: 680px; overflow: hidden; border-radius: var(--radius-lg); background: var(--ink); box-shadow: var(--shadow-lg); }
@@ -982,10 +984,45 @@ select:focus {
 .rk-verify-form h2 { margin: 8px 0 4px; font-size: 2.7rem; }
 .rk-verification-result { display: flex; gap: 11px; padding: 15px; border-radius: 10px; background: #f4ded7; color: var(--rust); }
 .rk-verification-result[data-status='verified'] { background: var(--forest-pale); color: var(--forest); }
+.rk-verification-result[data-status='ai_verified'], .rk-verification-result[data-status='manual_review'] { background: var(--forest-pale); color: var(--forest); }
 .rk-verification-result[data-status='pending'] { background: #f7edcd; color: #725611; }
 .rk-verification-result strong { display: block; font-size: 0.78rem; }
 .rk-verification-result p { margin: 4px 0; color: var(--ink-soft); font-size: 0.72rem; }
 .rk-verification-result small { display: block; margin-top: 4px; color: var(--ink-faint); font-size: 0.66rem; }
+.rk-email-verification { display: grid; gap: 11px; padding: 15px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--paper); }
+.rk-email-verification[data-verified='true'] { border-color: rgba(31,102,85,0.35); background: var(--forest-pale); }
+.rk-otp-row { display: grid; grid-template-columns: 1fr auto; gap: 9px; align-items: end; }
+.rk-inline-success { display: flex; align-items: center; gap: 7px; color: var(--forest); font-size: 0.72rem; font-weight: 800; }
+.rk-verification-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.rk-submission-success { max-width: 720px; margin: 32px auto; text-align: center; }
+.rk-submission-success > svg { color: var(--forest); }
+.rk-submission-success h2 { margin: 8px 0; font-size: clamp(2rem, 5vw, 3.6rem); }
+.rk-submission-success p { color: var(--ink-soft); line-height: 1.65; }
+.rk-legal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 18px; background: rgba(8,25,22,0.84); backdrop-filter: blur(10px); }
+.rk-legal-modal { width: min(720px, 100%); overflow: hidden; border-radius: var(--radius-md); background: var(--paper-light); box-shadow: var(--shadow-lg); }
+.rk-legal-modal > header { display: flex; gap: 15px; padding: 25px 28px; border-bottom: 1px solid var(--line); background: var(--forest-pale); }
+.rk-legal-modal > header > span { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: var(--forest); color: white; }
+.rk-legal-modal header small { color: var(--rust); font-weight: 900; text-transform: uppercase; }
+.rk-legal-modal h2 { margin: 3px 0; font-size: 2rem; }
+.rk-legal-modal header p { margin: 0; color: var(--ink-faint); font-size: 0.68rem; }
+.rk-legal-copy { display: grid; gap: 13px; max-height: 46vh; overflow-y: auto; padding: 26px 28px; color: var(--ink-soft); font-size: 0.78rem; line-height: 1.65; }
+.rk-legal-copy p { margin: 0; }
+.rk-legal-links { display: flex; flex-wrap: wrap; gap: 9px; }
+.rk-legal-links a { color: var(--forest); font-weight: 800; }
+.rk-legal-modal > footer { display: grid; gap: 13px; padding: 22px 28px 26px; border-top: 1px solid var(--line); }
+.rk-legal-modal footer label { display: grid; grid-template-columns: auto 1fr; gap: 9px; align-items: start; color: var(--ink); font-size: 0.72rem; line-height: 1.45; }
+.rk-legal-page { min-height: 100vh; padding: 90px 0; background: var(--paper); }
+.rk-policy-layout { display: grid; grid-template-columns: 0.7fr 1.3fr; gap: 70px; align-items: start; }
+.rk-policy-layout > header { position: sticky; top: 100px; }
+.rk-policy-layout > header h1 { margin: 15px 0; font-size: clamp(3.4rem, 7vw, 6.5rem); line-height: 0.9; }
+.rk-policy-layout > header p { color: var(--ink-faint); font-size: 0.72rem; }
+.rk-policy-layout > header div { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.rk-policy-layout a { color: var(--forest); font-weight: 800; }
+.rk-policy-layout article { display: grid; gap: 0; border-top: 1px solid var(--line-strong); }
+.rk-policy-layout article section { padding: 25px 0; border-bottom: 1px solid var(--line); }
+.rk-policy-layout article h2 { margin: 0 0 10px; font-size: 1.55rem; }
+.rk-policy-layout article p, .rk-policy-layout article div, .rk-policy-layout article li { color: var(--ink-soft); font-size: 0.79rem; line-height: 1.72; }
+.rk-policy-layout article ul { display: grid; gap: 7px; padding-left: 20px; }
 .rk-about-page { background: var(--paper); }
 .rk-about-hero { min-height: 78vh; display: flex; align-items: end; padding: 150px 0 80px; background: var(--ink); color: var(--paper-light); }
 .rk-about-hero h1 { margin: 18px 0 25px; font-size: clamp(4.3rem, 10vw, 10rem); line-height: 0.84; letter-spacing: -0.06em; }
@@ -1078,6 +1115,8 @@ select:focus {
   .rk-create-layout > header .rk-kicker { grid-column: auto; }
   .rk-form-section { grid-template-columns: 1fr; }
   .rk-verify-layout, .rk-about-flow { grid-template-columns: 1fr; }
+  .rk-policy-layout { grid-template-columns: 1fr; gap: 35px; }
+  .rk-policy-layout > header { position: static; }
   .rk-feedback-layout { grid-template-columns: 1fr; gap: 30px; }
 }
 
@@ -1152,6 +1191,8 @@ select:focus {
   .rk-create-actions p { margin: 0 0 4px; }
   .rk-verify-story, .rk-verify-form { padding: 30px 24px; }
   .rk-verify-story { min-height: 620px; }
+  .rk-otp-row, .rk-verification-actions { grid-template-columns: 1fr; }
+  .rk-legal-modal > header, .rk-legal-copy, .rk-legal-modal > footer { padding-inline: 20px; }
   .rk-contact-grid { grid-template-columns: 1fr; }
   .rk-admin-page > header, .rk-admin-actions { align-items: stretch; flex-direction: column; }
 }

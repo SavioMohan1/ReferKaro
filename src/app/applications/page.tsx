@@ -6,7 +6,7 @@ import PoolRankingPanel from '@/components/applications/pool-ranking-panel'
 import { requireRole } from '@/lib/auth/authorization'
 
 export default async function ApplicationsPage() {
-    const auth = await requireRole(['employee'])
+    const auth = await requireRole(['employee', 'admin'])
     if (!auth) redirect('/dashboard')
 
     const { data: applications, error } = await auth.admin

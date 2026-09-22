@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import JobSeekerDashboard from '@/components/dashboard/job-seeker-dashboard'
 import EmployeeDashboard from '@/components/dashboard/employee-dashboard'
 import LegalDisclaimerModal from '@/components/auth/legal-disclaimer-modal'
+import { CURRENT_LEGAL_POLICY_VERSION } from '@/lib/legal'
 
 export default async function DashboardPage() {
     const supabase = await createClient()
@@ -15,7 +16,7 @@ export default async function DashboardPage() {
 
     if (error || !profile) redirect('/onboarding')
 
-    const showLegalModal = !profile.has_accepted_terms
+    const showLegalModal = !profile.has_accepted_terms || profile.legal_policy_version !== CURRENT_LEGAL_POLICY_VERSION
 
     // Fetch recent activity depending on role
     let recentActivity: any[] = []

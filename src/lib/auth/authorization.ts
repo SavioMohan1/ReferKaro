@@ -17,7 +17,7 @@ export async function requireRole(allowedRoles: string[]) {
     const admin = createAdminClient()
     const { data: profile, error } = await admin
         .from('profiles')
-        .select('id, email, role, is_verified, is_banned')
+        .select('id, email, role, is_verified, is_banned, company, designation, work_email, work_email_verified_at')
         .eq('id', session.user.id)
         .single()
 

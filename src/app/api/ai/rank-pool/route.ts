@@ -5,7 +5,7 @@ import { rateLimit, getRequestIdentifier } from '@/lib/rate-limit'
 export const maxDuration = 300
 
 export async function POST(request: Request) {
-    const auth = await requireRole(['employee'])
+    const auth = await requireRole(['employee', 'admin'])
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const limited = rateLimit(getRequestIdentifier(request, auth.user.id), { limit: 2, windowSeconds: 300 })
