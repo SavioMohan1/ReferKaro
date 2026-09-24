@@ -6,7 +6,7 @@
 
 **Repository branch:** `main`
 
-**Latest verified revision:** `842e15e` (`a2df531` contains the latest referral verification and review-flow implementation)
+**Latest verified revision:** `a4dedf5` (editable job role, fixed 10-candidate pools, unified Azure OpenAI AI features, and patched production dependencies)
 
 **Overall status:** Deployed beta. Core referral workflows exist, but the product is not yet production-launch ready because payment activation and several final compliance/security checks remain open.
 
