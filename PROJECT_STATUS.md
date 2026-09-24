@@ -6,7 +6,7 @@
 
 **Repository branch:** `main`
 
-**Latest verified revision:** `a4dedf5` (editable job role, fixed 10-candidate pools, unified Azure OpenAI AI features, and patched production dependencies)
+**Latest verified revision:** `5eee298` (Razorpay test checkout, provider-backed payment verification, and atomic payment reconciliation)
 
 **Overall status:** Deployed beta. Core referral workflows exist, but the product is not yet production-launch ready because payment activation and several final compliance/security checks remain open.
 
@@ -25,6 +25,7 @@ ReferKaro is a two-sided referral platform. Job seekers apply to employee-posted
 - The latest production checks found no relevant Vercel runtime errors on the repaired routes.
 - `npm run lint`, `npm run build`, and `npm run check:secret-hygiene` passed after the 2026-09-22 changes.
 - Unauthenticated requests to protected job, verification, and legal-consent endpoints return HTTP 401.
+- Razorpay Test Mode checkout opens successfully in production with the replacement test credentials; a controlled Starter Pack check created a server-side ₹99 order and pending 3-token transaction without completing a payment.
 
 ### Authentication and role flows
 
@@ -69,6 +70,13 @@ ReferKaro is a two-sided referral platform. Job seekers apply to employee-posted
 - A controlled Testmail proxy message was forwarded through Resend to Gmail, then finalized as `referred`; the proxy was deactivated.
 - Resend DNS records were verified in the provider dashboard.
 
+### Test payments
+
+- Token and legacy success-fee orders use server-owned amounts; the browser cannot choose the price or token credit.
+- Checkout completion requires a valid HMAC signature and a captured Razorpay payment matching the stored order, amount, and INR currency.
+- Token crediting and success-fee fulfilment use idempotent database functions; success-fee fulfilment atomically updates the application and proxy email.
+- Razorpay cancellation and payment-failure states now produce explicit user-facing messages.
+
 ### AI and administration
 
 - Candidate-pool AI resume ranking and audited usage limits are implemented with the server-only Azure OpenAI `gpt-5-mini` deployment.
@@ -84,6 +92,7 @@ ReferKaro is a two-sided referral platform. Job seekers apply to employee-posted
 - Exercise an admin approval and rejection for both a job and an employee using disposable production records.
 - Run AI resume ranking twice against a ten-candidate pool and confirm a third attempt is blocked and recorded.
 - Re-run the complete seeker-to-referral production journey after payment is activated.
+- Complete one controlled Razorpay Test Mode payment and confirm token crediting, duplicate verification idempotency, and the captured-payment webhook path.
 
 No real OTP, employment evidence, legal acceptance, or disposable job record was created during the latest verification because those actions require owner-controlled data and alter production records.
 
@@ -91,7 +100,7 @@ No real OTP, employment evidence, legal acceptance, or disposable job record was
 
 ### Launch blocker
 
-- **Payments:** Razorpay remains configured with test credentials. Live merchant approval, production credentials, webhook verification, refund/reconciliation checks, and one controlled real transaction are still required. A provider migration should not begin until merchant onboarding and production API access are approved.
+- **Payments:** Razorpay Test Mode is working, but live merchant approval, production credentials, live webhook verification, refund/reconciliation checks, and one controlled real transaction are still required before launch.
 
 ### Compliance inputs still needed
 
@@ -135,6 +144,8 @@ The migration `supabase/migrations/20260922090000_verification_consent_and_job_r
 Earlier migrations include launch-gap remediation, advisor remediation, atomic pool applications, audited AI-ranking usage, and production referral status transitions.
 
 The migration `supabase/migrations/20260924093844_fixed_candidate_pool_size.sql` normalizes legacy single-referral rows and enforces a 10-application candidate pool at the database boundary.
+
+The migration `supabase/migrations/20260924102302_razorpay_success_fee_reconciliation.sql` adds unique payment-ID enforcement and a service-role-only function for atomic success-fee fulfilment.
 
 ## Required Environment Variables
 
