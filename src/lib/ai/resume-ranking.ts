@@ -103,16 +103,14 @@ export async function rankResumePool({ jobId, requestedBy, triggerKind }: Rankin
                         properties: {
                             rankings: {
                                 type: 'array',
-                                minItems: candidates.length,
-                                maxItems: candidates.length,
                                 items: {
                                     type: 'object',
                                     additionalProperties: false,
                                     required: ['application_id', 'rank', 'score', 'summary', 'strengths', 'gaps'],
                                     properties: {
                                         application_id: { type: 'string', enum: candidates.map((item) => item.application_id) },
-                                        rank: { type: 'integer', minimum: 1, maximum: candidates.length },
-                                        score: { type: 'integer', minimum: 0, maximum: 100 },
+                                        rank: { type: 'integer' },
+                                        score: { type: 'integer' },
                                         summary: { type: 'string' },
                                         strengths: { type: 'array', items: { type: 'string' } },
                                         gaps: { type: 'array', items: { type: 'string' } },
@@ -130,7 +128,11 @@ export async function rankResumePool({ jobId, requestedBy, triggerKind }: Rankin
         const expectedIds = new Set(candidates.map((item) => item.application_id))
         const ids = new Set(parsed.rankings.map((item) => item.application_id))
         const ranks = new Set(parsed.rankings.map((item) => item.rank))
-        if (ids.size !== expectedIds.size || ranks.size !== expectedIds.size || [...expectedIds].some((id) => !ids.has(id))) {
+        const invalidScoreOrRank = parsed.rankings.some((item) =>
+            !Number.isInteger(item.rank) || item.rank < 1 || item.rank > candidates.length ||
+            !Number.isInteger(item.score) || item.score < 0 || item.score > 100
+        )
+        if (parsed.rankings.length !== candidates.length || ids.size !== expectedIds.size || ranks.size !== expectedIds.size || invalidScoreOrRank || [...expectedIds].some((id) => !ids.has(id))) {
             throw new Error('The model returned an incomplete ranking')
         }
 

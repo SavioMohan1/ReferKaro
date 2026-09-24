@@ -1,6 +1,6 @@
 # ReferKaro Project Status
 
-**Last updated:** 2026-09-22
+**Last updated:** 2026-09-24
 
 **Canonical production URL:** https://referkaro.app
 
@@ -46,7 +46,8 @@ ReferKaro is a two-sided referral platform. Job seekers apply to employee-posted
 
 ### Job creation and review
 
-- Employee company and designation are read from the verified profile and displayed as non-editable values on job creation.
+- Employee company is read from the verified profile and remains non-editable; Job role is an independent editable field on job creation.
+- Candidate pools are fixed at exactly 10 applications in the UI, API, and database constraint.
 - Single-referral and candidate-pool choices include the requested candidate-quality guidance.
 - Submitted jobs enter an admin review state before public visibility.
 - The official job-posting URL and supplied company/role data are captured for review.
@@ -70,7 +71,8 @@ ReferKaro is a two-sided referral platform. Job seekers apply to employee-posted
 
 ### AI and administration
 
-- Candidate-pool AI resume ranking and audited usage limits are implemented.
+- Candidate-pool AI resume ranking and audited usage limits are implemented with the server-only Azure OpenAI `gpt-5-mini` deployment.
+- Employment-evidence analysis and resume ranking share the centralized Azure OpenAI client; the retired Gemini dependency and production requirement were removed.
 - Admin job review, employee manual review, and audit-oriented status fields are implemented.
 - AI ranking is limited to two uses for the applicable referral pool flow.
 
@@ -118,7 +120,7 @@ No real OTP, employment evidence, legal acceptance, or disposable job record was
 - **Authentication and database:** Supabase Auth and PostgreSQL with row-level security.
 - **Email:** Resend for outbound mail; Testmail namespace/proxy ingestion for referral forwarding.
 - **Scheduling and monitoring:** Datadog workflow calls the protected Testmail polling route.
-- **AI:** Server-side model integrations for verification and resume ranking; credentials must remain server-only.
+- **AI:** Server-side Azure OpenAI `gpt-5-mini` integration for verification and resume ranking; credentials remain server-only.
 - **Payments:** Razorpay integration exists but is not live-ready.
 
 ## Important Database Changes
@@ -132,6 +134,8 @@ The migration `supabase/migrations/20260922090000_verification_consent_and_job_r
 
 Earlier migrations include launch-gap remediation, advisor remediation, atomic pool applications, audited AI-ranking usage, and production referral status transitions.
 
+The migration `supabase/migrations/20260924093844_fixed_candidate_pool_size.sql` normalizes legacy single-referral rows and enforces a 10-application candidate pool at the database boundary.
+
 ## Required Environment Variables
 
 Use the existing environment templates and Vercel configuration. Never place values in this file or commit them.
@@ -141,7 +145,7 @@ Use the existing environment templates and Vercel configuration. Never place val
 - Testmail API key and namespace settings.
 - Datadog scheduler/connection secrets where applicable.
 - `WORK_EMAIL_OTP_SECRET` for production OTP hashing.
-- AI provider credentials used by server-side verification/ranking routes.
+- `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_BASE_URL`, and `AZURE_OPENAI_DEPLOYMENT` for server-side verification and ranking routes.
 - Razorpay key ID, key secret, and webhook secret after live approval.
 
 ## Continuation Checklist for Another Agent

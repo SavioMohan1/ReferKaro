@@ -13,7 +13,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function normalizeConfidenceScore(value: unknown, isVerified: boolean) {
     if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100) return null
 
-    // Gemini occasionally emits a 0-1 fraction even when explicitly asked for a percentage.
+    // Normalize fractional confidence defensively in case a provider ignores the percentage instruction.
     // Only normalize the positive decision case so a genuine 1% rejection stays rejected.
     const percentage = isVerified && value > 0 && value <= 1 ? value * 100 : value
     return Math.round(percentage)

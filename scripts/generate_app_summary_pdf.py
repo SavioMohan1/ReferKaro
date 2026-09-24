@@ -150,7 +150,7 @@ def main():
                 "<b>Data layer:</b> Supabase Postgres tables are defined by root SQL files for profiles, jobs, applications, payments/transactions, proxy emails, trust/safety, and terms; Storage buckets are used for resumes and verification documents.",
                 "<b>Core flow:</b> User signs in, profile/onboarding decides role, jobs are queried from Supabase, and the apply API checks token balance, prevents duplicates, writes the application, and triggers an email notification.",
                 "<b>Post-payment flow:</b> Payment verification updates transactions, adds tokens or unlocks a proxy email, then the inbound-email webhook marks the application as referred and forwards the message to the candidate.",
-                "<b>AI helpers:</b> Gemini-backed routes analyze resumes and review employment documents for verification support.",
+                "<b>AI helpers:</b> Azure OpenAI analyzes verification evidence and ranks referral-pool resumes.",
                 "<b>Background jobs/queue:</b> Not found in repo.",
             ],
             styles["bullet"],
@@ -160,7 +160,7 @@ def main():
             [
                 "<b>1.</b> Install dependencies with <font name='Courier'>npm install</font>.",
                 "<b>2.</b> Create <font name='Courier'>.env.local</font> with <font name='Courier'>NEXT_PUBLIC_SUPABASE_URL</font> and <font name='Courier'>NEXT_PUBLIC_SUPABASE_ANON_KEY</font> as documented in <font name='Courier'>README.md</font>.",
-                "<b>3.</b> Optional feature vars used in code: Razorpay keys, <font name='Courier'>RESEND_API_KEY</font>, <font name='Courier'>GOOGLE_GEMINI_API_KEY</font>, <font name='Courier'>SUPABASE_SERVICE_ROLE_KEY</font>, and <font name='Courier'>NEXT_PUBLIC_URL</font>.",
+                "<b>3.</b> Optional feature vars used in code include Razorpay keys, <font name='Courier'>RESEND_API_KEY</font>, server-only Azure OpenAI credentials, <font name='Courier'>SUPABASE_SERVICE_ROLE_KEY</font>, and <font name='Courier'>NEXT_PUBLIC_URL</font>.",
                 "<b>4.</b> Start the dev server with <font name='Courier'>npm run dev</font> and open <font name='Courier'>http://localhost:3000</font>.",
                 "<b>5.</b> Database bootstrap command: Not found in repo. SQL schema/setup files exist at the repo root, but no single setup sequence is documented.",
             ],

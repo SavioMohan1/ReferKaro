@@ -110,7 +110,6 @@ if (isProductionCheck) {
   add('warn', 'NEXT_PUBLIC_RAZORPAY_KEY_ID', 'test key detected; expected for local dev only');
 }
 
-requirePresent('GOOGLE_GEMINI_API_KEY');
 requireSecret('AZURE_OPENAI_API_KEY');
 requireUrl('AZURE_OPENAI_BASE_URL');
 requirePresent('AZURE_OPENAI_DEPLOYMENT');

@@ -74,7 +74,7 @@ Fix production domain/email consistency in server-side email templates and env d
 ## 2026-06-20 Update - Launch Environment Checker
 - Added `scripts/check-launch-env.js`, a dependency-free checker that validates launch environment shape without printing secret values.
 - Added `npm run check:launch-env` for production-mode checks.
-- The checker validates Supabase, Razorpay, Gemini, Resend/email sender, app URL, admin email, proxy email/domain, cron secret, inbound webhook secret, and optional Sentry source-map token presence.
+- The checker validates Supabase, Razorpay, Azure OpenAI, Resend/email sender, app URL, admin email, proxy email/domain, cron secret, inbound webhook secret, and optional Sentry source-map token presence.
 - Local production-mode check currently fails, which is expected until Vercel production env values are set: missing `NEXT_PUBLIC_URL`, missing `EMAIL_FROM`, missing `ADMIN_EMAIL`, missing `CRON_SECRET`, missing `WEBHOOK_INBOUND_SECRET`, `NEXT_PUBLIC_RAZORPAY_KEY_ID` is test-mode, `PROXY_EMAIL` is not on `referkaro.app`, and `PROXY_EMAIL_DOMAIN` is not `referkaro.app`.
 - The checker warns that `SENTRY_AUTH_TOKEN` is missing, which only affects source-map upload/debug quality.
 - Production build passed with `npm run build -- --webpack` and no warnings after adding the checker.
