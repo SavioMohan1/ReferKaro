@@ -19,20 +19,27 @@ export default function BuyTokensPage() {
         try {
             const response = await fetch('/api/payments/create-order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ planId: plan.id }) })
             const data = await response.json()
-            if (!response.ok) throw new Error(data.error)
+            if (!response.ok) throw new Error(data.error || 'The payment order could not be created.')
+            if (!(window as any).Razorpay) throw new Error('Secure checkout is still loading. Please try again.')
             const razorpay = new (window as any).Razorpay({
-                key: data.keyId, amount: data.amount, currency: 'INR', name: 'ReferKaro',
+                key: data.keyId, amount: data.amount, currency: data.currency, name: 'ReferKaro',
                 description: `Purchase ${plan.tokens} Tokens`, order_id: data.orderId,
                 handler: async (result: any) => {
-                    const verifyResponse = await fetch('/api/payments/verify', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ razorpay_order_id: result.razorpay_order_id, razorpay_payment_id: result.razorpay_payment_id, razorpay_signature: result.razorpay_signature }),
-                    })
-                    const verifyData = await verifyResponse.json()
-                    if (!verifyData.success) { setError('Payment verification failed. Tokens were not added.'); setLoading(null); return }
-                    setAddedTokens(plan.tokens); setPaymentSuccess(true); setLoading(null); router.refresh()
+                    try {
+                        const verifyResponse = await fetch('/api/payments/verify', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ razorpay_order_id: result.razorpay_order_id, razorpay_payment_id: result.razorpay_payment_id, razorpay_signature: result.razorpay_signature }),
+                        })
+                        const verifyData = await verifyResponse.json()
+                        if (!verifyResponse.ok || !verifyData.success) throw new Error('Payment verification failed. Tokens were not added.')
+                        setAddedTokens(plan.tokens); setPaymentSuccess(true); router.refresh()
+                    } catch (verificationError) {
+                        setError(verificationError instanceof Error ? verificationError.message : 'Payment verification failed. Tokens were not added.')
+                    } finally {
+                        setLoading(null)
+                    }
                 },
-                modal: { ondismiss: () => setLoading(null) },
+                modal: { ondismiss: () => { setError('Checkout was closed. No tokens were added.'); setLoading(null) } },
                 theme: { color: '#1f6655' },
             })
             razorpay.on('payment.failed', () => { setError('The payment failed. Tokens were not added.'); setLoading(null) })
@@ -42,7 +49,7 @@ export default function BuyTokensPage() {
 
     if (paymentSuccess) return <main className="rk-product-page"><div className="rk-purchase-success"><CheckCircle2 size={34} /><span className="rk-kicker">Payment verified</span><h1>{addedTokens} tokens<br />added.</h1><p>Your updated balance is ready for referral requests.</p><button type="button" className="rk-button rk-button-primary" onClick={() => router.push('/dashboard')}>Return to workspace</button></div></main>
 
-    return <main className="rk-product-page"><Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" /><div className="rk-shell rk-token-page">
+    return <main className="rk-product-page"><Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" /><div className="rk-shell rk-token-page">
         <Link href="/dashboard" className="rk-back-link"><ArrowLeft size={14} /> Workspace</Link>
         <header className="rk-listing-header"><div><span className="rk-kicker">Token store</span><h1>Choose how many<br />requests to make.</h1></div><div className="rk-listing-intro"><p>A token is used when you submit a referral request. Prices and quantities below come from the current product configuration.</p><strong>Payments are processed by Razorpay.</strong></div></header>
         {error && <div className="rk-form-error" role="alert">{error}</div>}

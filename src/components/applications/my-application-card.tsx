@@ -43,23 +43,30 @@ export default function MyApplicationCard({ application }: { application: any })
         try {
             const response = await fetch('/api/payments/create-order', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ planId: 'success_fee', amount: 900, tokens: 0, type: 'success_fee', applicationId: application.id }),
+                body: JSON.stringify({ type: 'success_fee', applicationId: application.id }),
             })
             const data = await response.json()
-            if (!response.ok) throw new Error(data.error)
+            if (!response.ok) throw new Error(data.error || 'The payment order could not be created.')
+            if (!window.Razorpay) throw new Error('Secure checkout is still loading. Please try again.')
             const razorpay = new window.Razorpay({
-                key: data.keyId, amount: data.amount, currency: 'INR', name: 'ReferKaro',
+                key: data.keyId, amount: data.amount, currency: data.currency, name: 'ReferKaro',
                 description: `Success Fee for ${application.jobs?.company}`, order_id: data.orderId,
                 handler: async (result: any) => {
-                    const verifyResponse = await fetch('/api/payments/verify', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ razorpay_order_id: result.razorpay_order_id, razorpay_payment_id: result.razorpay_payment_id, razorpay_signature: result.razorpay_signature }),
-                    })
-                    const verifyData = await verifyResponse.json()
-                    if (!verifyData.success) { setError('Payment verification failed.'); return }
-                    router.refresh()
+                    try {
+                        const verifyResponse = await fetch('/api/payments/verify', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ razorpay_order_id: result.razorpay_order_id, razorpay_payment_id: result.razorpay_payment_id, razorpay_signature: result.razorpay_signature }),
+                        })
+                        const verifyData = await verifyResponse.json()
+                        if (!verifyResponse.ok || !verifyData.success) throw new Error('Payment verification failed. Referral access was not unlocked.')
+                        router.refresh()
+                    } catch (verificationError) {
+                        setError(verificationError instanceof Error ? verificationError.message : 'Payment verification failed.')
+                    } finally {
+                        setPaying(false)
+                    }
                 },
-                modal: { ondismiss: () => setPaying(false) },
+                modal: { ondismiss: () => { setError('Checkout was closed. No status was changed.'); setPaying(false) } },
                 theme: { color: '#1f6655' },
             })
             razorpay.on('payment.failed', () => { setError('The payment failed. No status was changed.'); setPaying(false) })
@@ -76,7 +83,7 @@ export default function MyApplicationCard({ application }: { application: any })
 
     return (
         <article className="rk-tracker-card">
-            <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+            <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
             <header><div><span><Building2 size={14} /> {application.jobs?.company}</span><h2>{application.jobs?.role_title}</h2><small>Requested {new Date(application.applied_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</small></div><span className="rk-status" data-status={application.status}>{application.status.replace('_', ' ')}</span></header>
             {error && <div className="rk-form-error" role="alert">{error}</div>}
             <div className="rk-tracker-links"><Link href={`/jobs/${application.job_id}`}>View role <ArrowUpRight size={13} /></Link><button type="button" onClick={() => setExpanded(!expanded)}>Application details <ChevronDown size={14} data-open={expanded} /></button></div>

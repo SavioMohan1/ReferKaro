@@ -64,7 +64,7 @@ export interface Transaction {
     status: 'pending' | 'success' | 'failed'
     razorpay_order_id: string
     razorpay_payment_id: string | null
-    type: 'token' | 'success_fee'
+    type: 'token' | 'success_fee' | 'premium_fee'
     application_id: string | null
     created_at: string
 }

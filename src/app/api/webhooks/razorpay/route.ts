@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
 import {
-    isValidWebhookSignature,
     markRazorpayOrderFailed,
     reconcileRazorpayPayment
 } from '@/lib/payments/reconcile-razorpay-payment'
+import { isValidWebhookSignature } from '@/lib/payments/razorpay-validation'
 
 export async function POST(request: Request) {
     try {
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
         }
 
         if (event === 'payment.captured') {
-            const result = await reconcileRazorpayPayment(payment.order_id, payment.id)
+            const result = await reconcileRazorpayPayment(payment.order_id, payment.id, undefined, payment)
             if (!result.success) {
                 return NextResponse.json({ error: result.error }, { status: result.status })
             }
